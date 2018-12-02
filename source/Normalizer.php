@@ -11,7 +11,7 @@ use ash\token\ITokenFactory;
 
 
 
-final class ExpressionNormalizer
+final class Normalizer
 implements INormalizer
 {
 

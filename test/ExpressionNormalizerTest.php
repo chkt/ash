@@ -11,7 +11,7 @@ use ash\token\ExpressionList;
 use ash\token\Operator;
 use ash\token\BinaryOperation;
 use ash\token\BinaryOperatorLiteral;
-use ash\ExpressionNormalizer;
+use ash\Normalizer;
 
 
 
@@ -148,7 +148,7 @@ extends TestCase
 	private function _produceNormalizer(ITokenFactory $factory = null) {
 		if (is_null($factory)) $factory = $this->_mockTokenFactory();
 
-		return new ExpressionNormalizer($factory);
+		return new Normalizer($factory);
 	}
 
 
