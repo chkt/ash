@@ -5,7 +5,7 @@ namespace test\model\expr;
 use PHPUnit\Framework\TestCase;
 use ash\token\IListToken;
 use ash\token\IOperationToken;
-use ash\ExpressionSolver;
+use ash\Solver;
 use ash\token\IToken;
 
 
@@ -102,7 +102,7 @@ extends TestCase
 
 
 	private function _produceSolver(IToken $token) {
-		return new ExpressionSolver($token);
+		return new Solver($token);
 	}
 
 	private function _produceExpression(array $ast) {

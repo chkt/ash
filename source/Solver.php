@@ -8,7 +8,8 @@ use ash\token\IListToken;
 
 
 
-final class ExpressionSolver
+final class Solver
+implements ISolver
 {
 
 	private $_context;
