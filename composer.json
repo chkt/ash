@@ -1,0 +1,36 @@
+{
+	"name" : "chkt/ash",
+	"description" : "Expression parser",
+	"license" : "MIT",
+
+	"keywords" : [],
+
+	"authors" : [{
+		"name" : "Christoph Kettelhoit",
+		"email" : "ck@chkt.one",
+		"homepage" : "https://chkt.one",
+		"role" : "Developer"
+	}],
+
+	"autoload" : {
+		"psr-4" : {
+			"ash\\" : "source/"
+		}
+	},
+
+	"autoload-dev" : {
+		"psr-4" : {
+			"test\\" : "test/"
+		}
+	},
+
+	"require" : {
+		"php" : "^7.0",
+		"chkt/eve" : "1.0.0"
+	},
+
+	"require-dev" : {
+		"phpunit/phpunit" : "5.6.*",
+		"php-mock/php-mock-phpunit" : "1.1.*"
+	}
+}
