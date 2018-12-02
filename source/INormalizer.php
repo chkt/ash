@@ -6,7 +6,7 @@ use ash\token\IToken;
 
 
 
-interface IExpressionNormalizer
+interface INormalizer
 {
 
 	public function transform(IToken $token) : IToken;

@@ -12,7 +12,7 @@ use ash\token\ITokenFactory;
 
 
 final class ExpressionNormalizer
-implements IExpressionNormalizer
+implements INormalizer
 {
 
 	private $_factory;
