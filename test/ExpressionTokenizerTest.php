@@ -3,7 +3,7 @@
 namespace test\model\expr;
 
 use PHPUnit\Framework\TestCase;
-use ash\ExpressionTokenizer;
+use ash\Tokenizer;
 use ash\token\IToken;
 use ash\token\ITokenFactory;
 use ash\token\BinaryOperatorLiteral;
@@ -50,7 +50,7 @@ extends TestCase
 	private function _produceParser(ITokenFactory $factory = null) {
 		if (is_null($factory)) $factory = $this->_mockFactory();
 
-		return new ExpressionTokenizer($factory);
+		return new Tokenizer($factory);
 	}
 
 

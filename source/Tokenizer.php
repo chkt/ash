@@ -7,7 +7,8 @@ use ash\token\ITokenFactory;
 
 
 
-final class ExpressionTokenizer
+final class Tokenizer
+implements ITokenizer
 {
 
 	private $_factory;
