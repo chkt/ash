@@ -16,7 +16,7 @@ use ash\token\ExpressionList;
 
 
 
-final class ExpressionTokenizerTest
+final class TokenizerTest
 extends TestCase
 {
 
