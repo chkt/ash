@@ -15,7 +15,7 @@ use ash\Normalizer;
 
 
 
-final class ExpressionNormalizerTest
+final class NormalizerTest
 extends TestCase
 {
 
