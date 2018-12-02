@@ -10,7 +10,7 @@ use ash\token\IToken;
 
 
 
-final class ExpressionSolverTest
+final class SolverTest
 extends TestCase
 {
 
