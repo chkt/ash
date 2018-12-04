@@ -24,7 +24,8 @@ implements ISolver
 
 	private function _opAccess(array $source, $prop) {
 		if (!array_key_exists($prop, $source)) throw new \ErrorException(sprintf(
-			'EXPR inaccessible "%s"',
+			'EXPR inaccessible "%2$s" in [%1$s]',
+			implode(', ', array_keys($source)),
 			$prop
 		));
 
