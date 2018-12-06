@@ -4,6 +4,7 @@ namespace test\model\expr;
 
 use PHPUnit\Framework\TestCase;
 use ash\token\IToken;
+use ash\token\ILiteralToken;
 use ash\token\IGroupToken;
 use ash\token\IListToken;
 use ash\token\ITokenFactory;
@@ -11,6 +12,8 @@ use ash\token\ExpressionList;
 use ash\token\Operator;
 use ash\token\BinaryOperation;
 use ash\token\BinaryOperatorLiteral;
+use ash\token\IntegerValue;
+use ash\token\FloatValue;
 use ash\Normalizer;
 
 
@@ -38,6 +41,26 @@ extends TestCase
 				'type' => $type,
 				'data' => $chars
 			]);
+
+		return $token;
+	}
+
+	private function _mockLiteralToken(int $type, int $valueType, string $chars) {
+		$token = $this
+			->getMockBuilder(ILiteralToken::class)
+			->getMock();
+
+		$token
+			->method('getType')
+			->willReturn($type);
+
+		$token
+			->method('getChars')
+			->willReturn($chars);
+
+		$token
+			->method('getValueType')
+			->willReturn($valueType);
 
 		return $token;
 	}
@@ -117,6 +140,8 @@ extends TestCase
 					case 'binaryOperatorLiteral' : return new BinaryOperatorLiteral();
 					case 'operator' : return new Operator($factory, $args);
 					case 'binaryOperation' : return new BinaryOperation($factory, $args);
+					case 'integerValue' : return new IntegerValue($factory, $args);
+					case 'floatValue' : return new FloatValue($factory, $args);
 					default : $this->fail($name);
 				}
 			});
@@ -129,7 +154,10 @@ extends TestCase
 		$type = $ast['type'];
 		$data = $ast['data'];
 
-		if (is_string($data)) return $this->_mockToken($type, $data);
+		if (is_string($data))  {
+			if (!array_key_exists('value', $ast)) return $this->_mockToken($type, $data);
+			else return $this->_mockLiteralToken($type, $ast['value'], $data);
+		}
 		else if (array_key_exists('type', $data)) {
 			$child = $this->_produceExpression($data);
 
@@ -149,6 +177,51 @@ extends TestCase
 		if (is_null($factory)) $factory = $this->_mockTokenFactory();
 
 		return new Normalizer($factory);
+	}
+
+
+	public function testNormalizeNumberInt() {
+		$token = [ 'type' => IToken::TOKEN_NUMBER_LITERAL, 'data' => '1200', 'value' => ILiteralToken::TYPE_INT_DEC ];
+		$ast = [ 'type' => IToken::TOKEN_VALUE, 'data' => 1200 ];
+
+		$expr = $this->_produceExpression($token);
+		$norm = $this->_produceNormalizer()->transform($expr);
+
+		$this->assertSame($ast, $norm->getProjection());
+		$this->assertInstanceOf(IntegerValue::class, $norm);
+	}
+
+	public function testNormalizeNumberFloat() {
+		$token = [ 'type' => IToken::TOKEN_NUMBER_LITERAL, 'data' => '120.012e-120', 'value' => ILiteralToken::TYPE_FLOAT];
+		$ast = [ 'type' => IToken::TOKEN_VALUE, 'data' => 120.012e-120 ];
+
+		$expr = $this->_produceExpression($token);
+		$norm = $this->_produceNormalizer()->transform($expr);
+
+		$this->assertSame($ast, $norm->getProjection());
+		$this->assertInstanceOf(FloatValue::class, $norm);
+	}
+
+	public function testNormalizeNumberBin() {
+		$token = [ 'type' => IToken::TOKEN_NUMBER_LITERAL, 'data' => '0b100000000', 'value' => ILiteralToken::TYPE_INT_BIN ];
+		$ast = [ 'type' => IToken::TOKEN_VALUE, 'data' => 256 ];
+
+		$expr = $this->_produceExpression($token);
+		$norm = $this->_produceNormalizer()->transform($expr);
+
+		$this->assertSame($ast, $norm->getProjection());
+		$this->assertInstanceOf(IntegerValue::class, $norm);
+	}
+
+	public function testNormalizeNumberHex() {
+		$token = [ 'type' => IToken::TOKEN_NUMBER_LITERAL, 'data' => '0xff', 'value' => ILiteralToken::TYPE_INT_HEX ];
+		$ast = [ 'type' => IToken::TOKEN_VALUE, 'data' => 255 ];
+
+		$expr = $this->_produceExpression($token);
+		$norm = $this->_produceNormalizer()->transform($expr);
+
+		$this->assertSame($ast, $norm->getProjection());
+		$this->assertInstanceOf(IntegerValue::class, $norm);
 	}
 
 
@@ -465,6 +538,76 @@ extends TestCase
 		$fast = $this->_produceNormalizer()->transform($expr);
 		$this->assertEquals($ast, $fast->getProjection());
 	}
+
+
+	 public function testNormalizeIdentifierValueOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [[
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '+'
+			], [
+				'type' => IToken::TOKEN_NUMBER_LITERAL,
+				'data' => '1200',
+				'value' => ILiteralToken::TYPE_INT_DEC
+			]]
+		]);
+		$ast = [
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '+'
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 1200
+			]]
+		];
+
+		$norm = $this->_produceNormalizer()->transform($expr);
+
+		$this->assertSame($ast, $norm->getProjection());
+	}
+
+	public function testNormalizeValueIdentifierOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [[
+				'type' => IToken::TOKEN_NUMBER_LITERAL,
+				'data' => '1200',
+				'value' => ILiteralToken::TYPE_INT_DEC
+			], [
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '+'
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			]]
+		]);
+		$ast = [
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '+'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 1200
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			]]
+		];
+
+		$norm = $this->_produceNormalizer()->transform($expr);
+
+		$this->assertSame($ast, $norm->getProjection());
+	}
+
 
 	public function testNormalizeCall() {
 		$expr = $this->_produceExpression([
