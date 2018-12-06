@@ -21,6 +21,16 @@ extends AListToken
 	private function _getOperatorSuccessor(string $char) : string {
 		switch ($char) {
 			case '(' : return 'expressionGroup';
+			case '0' :
+			case '1' :
+			case '2' :
+			case '3' :
+			case '4' :
+			case '5' :
+			case '6' :
+			case '7' :
+			case '8' :
+			case '9' : return 'numberLiteral';
 			default : return 'nameLiteral';
 		}
 	}
@@ -44,6 +54,7 @@ extends AListToken
 
 		switch ($type) {
 			case IToken::TOKEN_NAME_LITERAL :
+			case IToken::TOKEN_NUMBER_LITERAL :
 			case IToken::TOKEN_ACCESS_GROUP :
 			case IToken::TOKEN_EXPRESSION_GROUP :
 			case IToken::TOKEN_CALL_GROUP :
