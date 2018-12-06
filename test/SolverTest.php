@@ -2,6 +2,7 @@
 
 namespace test\model\expr;
 
+use ash\token\IValueToken;
 use PHPUnit\Framework\TestCase;
 use ash\token\IListToken;
 use ash\token\IOperationToken;
@@ -30,7 +31,23 @@ extends TestCase
 		return $token;
 	}
 
-	public function _mockOperation(int $type, array $data) {
+	private function _mockValueToken(int $type, $value) {
+		$token = $this
+			->getMockBuilder(IValueToken::class)
+			->getMock();
+
+		$token
+			->method('getType')
+			->willReturn($type);
+
+		$token
+			->method('getValue')
+			->willReturn($value);
+
+		return $token;
+	}
+
+	private function _mockOperation(int $type, array $data) {
 		$operator = $this->_mockToken($data[0]['type'], $data[0]['data']);
 		$operands = [];
 
@@ -39,6 +56,7 @@ extends TestCase
 			$itemType = $item['type'];
 
 			if ($itemType === IToken::TOKEN_NAME_LITERAL) $operands[] = $this->_mockToken($itemType, $item['data']);
+			else if ($itemType === IToken::TOKEN_VALUE) $operands[] = $this->_mockValueToken($itemType, $item['data']);
 			else if ($itemType === IToken::TOKEN_BINARY_OPERATION) $operands[] = $this->_mockOperation($itemType, $item['data']);
  			else if ($itemType === IToken::TOKEN_EXPRESSION_LIST) $operands[] = $this->_mockList($itemType, $item['data']);
  			else $this->fail($itemType);
@@ -113,6 +131,9 @@ extends TestCase
 			case IToken::TOKEN_OPERATOR :
 				return $this->_mockToken($type, $ast['data']);
 
+			case IToken::TOKEN_VALUE :
+				return $this->_mockValueToken($type, $ast['data']);
+
 			case IToken::TOKEN_BINARY_OPERATION :
 				return $this->_mockOperation($type, $ast['data']);
 
@@ -121,6 +142,31 @@ extends TestCase
 
 			default : $this->fail($type);
 		}
+	}
+
+
+	public function testSolveInt() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_VALUE,
+			'data' => 1200
+		]);
+		$context = [];
+
+		$solver = $this->_produceSolver($expr);
+
+		$this->assertEquals(1200, $solver->resolve($context));
+	}
+
+	public function testSolveFloat() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_VALUE,
+			'data' => 120.012e-120
+		]);
+		$context = [];
+
+		$solver = $this->_produceSolver($expr);
+
+		$this->assertEquals(120.012e-120, $solver->resolve($context));
 	}
 
 
@@ -248,7 +294,7 @@ extends TestCase
 		$this->assertEquals(15, $solver->resolve($context));
 	}
 
-	public function testSolvePrecedence() {
+	public function testSolveOperationPrecedence() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
@@ -275,6 +321,50 @@ extends TestCase
 
 		$solver = $this->_produceSolver($expr);
 		$this->assertEquals(12, $solver->resolve($context));
+	}
+
+	public function testSolveIntIdentifierOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => Itoken::TOKEN_OPERATOR,
+				'data' => '+'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 1200
+ 			], [
+ 				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			]]
+		]);
+
+		$solver = $this->_produceSolver($expr);
+
+		$this->assertSame(1201, $solver->resolve([ 'foo' => true ]));
+		$this->assertSame(1202, $solver->resolve([ 'foo' => 2 ]));
+		$this->assertSame(1200.12, $solver->resolve([ 'foo' => 0.12]));
+	}
+
+	public function testSolveFloatIdentifierOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => Itoken::TOKEN_OPERATOR,
+				'data' => '+'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 10.01
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			]]
+		]);
+
+		$solver = $this->_produceSolver($expr);
+
+		$this->assertSame(11.01, $solver->resolve([ 'foo' => true ]));
+		$this->assertSame(12.01, $solver->resolve([ 'foo' => 2 ]));
+		$this->assertSame(10.13, $solver->resolve([ 'foo' => 0.12]));
 	}
 
 
