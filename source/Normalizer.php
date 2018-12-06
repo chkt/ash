@@ -3,6 +3,7 @@
 namespace ash;
 
 use ash\token\IToken;
+use ash\token\ILiteralToken;
 use ash\token\IGroupToken;
 use ash\token\IListToken;
 use ash\token\IOperatorToken;
@@ -85,6 +86,20 @@ implements INormalizer
 	}
 
 
+	private function _composeValue(ILiteralToken $token) : IToken {
+		$type = $token->getValueType();
+		$chars = $token->getChars();
+
+		switch ($type) {
+			case ILiteralToken::TYPE_INT_DEC : return $this->_factory->produce('integerValue', [ (int) $chars ]);
+			case ILiteralToken::TYPE_FLOAT : return $this->_factory->produce('floatValue', [ (float) $chars ]);
+			case ILiteralToken::TYPE_INT_HEX : return $this->_factory->produce('integerValue', [ hexdec(substr($chars, 2)) ]);
+			case ILiteralToken::TYPE_INT_BIN : return $this->_factory->produce('integerValue', [ bindec(substr($chars, 2)) ]);
+			default : throw new \ErrorException($type);
+		}
+	}
+
+
 	private function _composeAccess(IToken $scope, IGroupToken $access) : IToken {
 		$op = $this->_produceOperator('[...]');
 		$prop = $this->_resolveExpression($access->getChild());
@@ -105,6 +120,7 @@ implements INormalizer
 
 		switch ($type) {
 			case IToken::TOKEN_NAME_LITERAL : return $token;
+			case IToken::TOKEN_NUMBER_LITERAL : return $this->_composeValue($token);
 			case IToken::TOKEN_EXPRESSION_GROUP : return $this->_resolveExpressionGroup($token);
 			default : throw new \ErrorException($type);
 		}
@@ -191,6 +207,9 @@ implements INormalizer
 			case IToken::TOKEN_NAME_LITERAL :
 			case IToken::TOKEN_OPERATOR :
 				return $token;
+
+			case IToken::TOKEN_NUMBER_LITERAL :
+				return $this->_composeValue($token);
 
 			default : throw new \ErrorException(sprintf(
 				'EXPR invalid target "%s"',
