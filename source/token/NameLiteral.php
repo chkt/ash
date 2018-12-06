@@ -6,6 +6,7 @@ namespace ash\token;
 
 final class NameLiteral
 extends AToken
+implements ILiteralToken
 {
 
 	public function getType() : int {
@@ -19,5 +20,10 @@ extends AToken
 		if (!empty($chars)) $list .= '01234567890';
 
 		return stripos($list, $char) !== false;
+	}
+
+
+	public function getValueType() : string {
+		return self::TYPE_NAME;
 	}
 }
