@@ -1,4 +1,4 @@
-#ash
+# ash
 ## A basic expression solver
 
 Ash is an expression solver using basic arithmetic expressions in a sandboxed environment.
