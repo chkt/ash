@@ -1,6 +1,6 @@
 {
 	"name" : "chkt/ash",
-	"description" : "Expression parser",
+	"description" : "A basic expression solver",
 	"license" : "MIT",
 
 	"keywords" : [],
