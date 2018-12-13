@@ -95,6 +95,7 @@ implements INormalizer
 			case ILiteralToken::TYPE_FLOAT : return $this->_factory->produce('floatValue', [ (float) $chars ]);
 			case ILiteralToken::TYPE_INT_HEX : return $this->_factory->produce('integerValue', [ hexdec(substr($chars, 2)) ]);
 			case ILiteralToken::TYPE_INT_BIN : return $this->_factory->produce('integerValue', [ bindec(substr($chars, 2)) ]);
+			case ILiteralToken::TYPE_STRING : return $this->_factory->produce('stringValue', [ substr($chars, 1, strlen($chars) - 2) ]);
 			default : throw new \ErrorException($type);
 		}
 	}
@@ -120,7 +121,8 @@ implements INormalizer
 
 		switch ($type) {
 			case IToken::TOKEN_NAME_LITERAL : return $token;
-			case IToken::TOKEN_NUMBER_LITERAL : return $this->_composeValue($token);
+			case IToken::TOKEN_NUMBER_LITERAL :
+			case IToken::TOKEN_STRING_LITERAL : return $this->_composeValue($token);
 			case IToken::TOKEN_EXPRESSION_GROUP : return $this->_resolveExpressionGroup($token);
 			default : throw new \ErrorException($type);
 		}
@@ -209,6 +211,7 @@ implements INormalizer
 				return $token;
 
 			case IToken::TOKEN_NUMBER_LITERAL :
+			case IToken::TOKEN_STRING_LITERAL :
 				return $this->_composeValue($token);
 
 			default : throw new \ErrorException(sprintf(
