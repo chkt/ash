@@ -1,19 +1,14 @@
 <?php
 
-namespace test\model\expr;
+namespace test;
 
 use PHPUnit\Framework\TestCase;
+use ash\token;
 use ash\token\IToken;
 use ash\token\ILiteralToken;
 use ash\token\IGroupToken;
 use ash\token\IListToken;
 use ash\token\ITokenFactory;
-use ash\token\ExpressionList;
-use ash\token\Operator;
-use ash\token\BinaryOperation;
-use ash\token\BinaryOperatorLiteral;
-use ash\token\IntegerValue;
-use ash\token\FloatValue;
 use ash\Normalizer;
 
 
@@ -136,12 +131,13 @@ extends TestCase
 			)
 			->willReturnCallback(function(string $name, array $args) use ($factory) {
 				switch ($name) {
-					case 'expressionList' : return new ExpressionList($factory, $args);
-					case 'binaryOperatorLiteral' : return new BinaryOperatorLiteral();
-					case 'operator' : return new Operator($factory, $args);
-					case 'binaryOperation' : return new BinaryOperation($factory, $args);
-					case 'integerValue' : return new IntegerValue($factory, $args);
-					case 'floatValue' : return new FloatValue($factory, $args);
+					case 'expressionList' : return new token\ExpressionList($factory, $args);
+					case 'binaryOperatorLiteral' : return new token\BinaryOperatorLiteral();
+					case 'operator' : return new token\Operator($factory, $args);
+					case 'binaryOperation' : return new token\BinaryOperation($factory, $args);
+					case 'integerValue' : return new token\IntegerValue($factory, $args);
+					case 'floatValue' : return new token\FloatValue($factory, $args);
+					case 'stringValue' : return new token\StringValue($factory, $args);
 					default : $this->fail($name);
 				}
 			});
@@ -188,7 +184,7 @@ extends TestCase
 		$norm = $this->_produceNormalizer()->transform($expr);
 
 		$this->assertSame($ast, $norm->getProjection());
-		$this->assertInstanceOf(IntegerValue::class, $norm);
+		$this->assertInstanceOf(token\IntegerValue::class, $norm);
 	}
 
 	public function testNormalizeNumberFloat() {
@@ -199,7 +195,7 @@ extends TestCase
 		$norm = $this->_produceNormalizer()->transform($expr);
 
 		$this->assertSame($ast, $norm->getProjection());
-		$this->assertInstanceOf(FloatValue::class, $norm);
+		$this->assertInstanceOf(token\FloatValue::class, $norm);
 	}
 
 	public function testNormalizeNumberBin() {
@@ -210,7 +206,7 @@ extends TestCase
 		$norm = $this->_produceNormalizer()->transform($expr);
 
 		$this->assertSame($ast, $norm->getProjection());
-		$this->assertInstanceOf(IntegerValue::class, $norm);
+		$this->assertInstanceOf(token\IntegerValue::class, $norm);
 	}
 
 	public function testNormalizeNumberHex() {
@@ -221,11 +217,23 @@ extends TestCase
 		$norm = $this->_produceNormalizer()->transform($expr);
 
 		$this->assertSame($ast, $norm->getProjection());
-		$this->assertInstanceOf(IntegerValue::class, $norm);
+		$this->assertInstanceOf(token\IntegerValue::class, $norm);
 	}
 
 
-	public function testNormalizeLiteral() {
+	public function testNormalizeString() {
+		$token = [ 'type' => IToken::TOKEN_STRING_LITERAL, 'data' => '"foo \\" \\bar\\\\"', 'value' => ILiteralToken::TYPE_STRING ];
+		$ast = [ 'type' => IToken::TOKEN_VALUE, 'data' => 'foo \\" \\bar\\\\' ];
+		
+		$expr = $this->_produceExpression($token);
+		$norm = $this->_produceNormalizer()->transform($expr);
+		
+		$this->assertSame($ast, $norm->getProjection());
+		$this->assertInstanceOf(token\StringValue::class, $norm);
+	}
+
+
+	public function testNormalizeName() {
 		$token = [
 			'type' => IToken::TOKEN_NAME_LITERAL,
 			'data' => 'foo'
@@ -288,7 +296,7 @@ extends TestCase
 		$this->assertEquals($ast, $fast->getProjection());
 	}
 
-	public function testNormalizeAccessGroup() {
+	public function testNormalizeAccessGroupName() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_ACCESS_GROUP,
 			'data' => [
@@ -307,6 +315,28 @@ extends TestCase
 		$fast = $this->_produceNormalizer()->transform($expr);
 		$this->assertEquals($ast, $fast->getProjection());
 	}
+
+	public function testNormalizeAccessGroupValue() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_ACCESS_GROUP,
+			'data' => [
+				'type' => IToken::TOKEN_EXPRESSION,
+				'data' => [[
+					'type' => IToken::TOKEN_STRING_LITERAL,
+					'data' => '"foo"',
+					'value' => ILiteralToken::TYPE_STRING
+				]]
+			]
+		]);
+		$ast = [
+			'type' => IToken::TOKEN_VALUE,
+			'data' => 'foo'
+		];
+
+		$norm = $this->_produceNormalizer()->transform($expr);
+		$this->assertEquals($ast, $norm->getProjection());
+	}
+
 
 	public function testNormalizeExpressionList() {
 		$expr = $this->_produceExpression([
@@ -375,7 +405,7 @@ extends TestCase
 		$this->assertEquals($ast, $fast->getProjection());
 	}
 
-	public function testNormalizeMalformed() {
+	public function testNormalize_invalid() {
 		$expr = $this->_produceExpression([
 			'type' => -1,
 			'data' => 'foo'
@@ -459,7 +489,7 @@ extends TestCase
 			]]
 		]);
 		$ast = [
-			'type' => ITOKEN::TOKEN_BINARY_OPERATION,
+			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
 				'data' => '.'
@@ -483,6 +513,42 @@ extends TestCase
 
 		$fast = $this->_produceNormalizer()->transform($expr);
 		$this->assertEquals($ast, $fast->getProjection());
+	}
+
+	public function testNormalizeValueAccess() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [[
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_ACCESS_GROUP,
+				'data' => [
+					'type' => IToken::TOKEN_EXPRESSION,
+					'data' => [[
+						'type' => IToken::TOKEN_STRING_LITERAL,
+						'data' => '"bar"',
+						'value' => ILiteralToken::TYPE_STRING
+					]]
+				]
+			]]
+		]);
+		$ast = [
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '[...]'
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 'bar'
+			]]
+		];
+
+		$norm = $this->_produceNormalizer()->transform($expr);
+		$this->assertEquals($ast, $norm->getProjection());
 	}
 
 	public function testNormalizeGroup() {
@@ -689,7 +755,7 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => Itoken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_OPERATOR,
 				'data' => 'call'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
