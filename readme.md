@@ -82,13 +82,16 @@ when that access has not been deliberately provided.
 #### Scalar values
 
 Currently supported are floating point numbers in basic `1.0` and exponent notation `1.0e-1`, 
-and integers in basic `1`, binary `0b1` and hexadecimal `0x1` notation.
+integers in basic `1`, binary `0b1` and hexadecimal `0x1` notation and basic strings `'foo'`,`"foo"`.
 
 Any number starting with `0x` or `0b` will be treated as an integer, 
 any other number containing a dot `0.0` will be treated as a float.
 All remaining numbers will be treated as integers.
 
-Support for booleans, strings and typecasting is planned. 
+Strings can be delimited with the quotation `"` and apostrophe `'` characters
+and the delimiter can be escaped with the backslash `\ ` character. 
+
+Support for booleans, nan, +/-infinity and typecasting is planned. 
 
 #### Arithmetic operations
 
@@ -108,12 +111,26 @@ and logic operations is planned.
 
 Property accesses are done using the `.` operator for static access `foo.bar`, and
 square brackets for computed access `foo[bar]`.
-Static and computed accesses can be freely mixed `foo[bar].baz[qux][qux]`.
+
+Static and computed accesses can be freely mixed `foo[bar].baz[qux][qux]` and
+computed accesses can resolve to either integers `foo[ 1 ]` or strings `foo[ 'bar' ]`.
 
 #### Calls
 
 Anything that resolves to a `callable` within php can be called through the solver
 using the round brackets `foo()`.
+
+```php
+  $solver = $parser->parse('baz[ foo() ]');
+  
+  $context = [
+      'foo' : function() : string { return 'bar'; },
+      'baz' => [ 'bar' => 'qux' ]]
+    ];
+  $result = $solver->resolve($context);
+```
+
 Arguments are separated by commas `foo(bar, baz)`.
+
 Nested `foo(bar(), baz())` and chained calls `foo()()` are allowed.
 The return values of calls can be freely used in any subsequent operation `foo().bar + baz()`. 
