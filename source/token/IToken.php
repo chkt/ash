@@ -19,6 +19,7 @@ extends IProjectable
 	const TOKEN_EXPRESSION_LIST = 5;
 
 	const TOKEN_NUMBER_LITERAL = 6;
+	const TOKEN_STRING_LITERAL = 11;
 	const TOKEN_NAME_LITERAL = 7;
 
 	const TOKEN_VALUE = 8;
