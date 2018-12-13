@@ -4,16 +4,9 @@ namespace test\model\expr;
 
 use PHPUnit\Framework\TestCase;
 use ash\Tokenizer;
+use ash\token;
 use ash\token\IToken;
 use ash\token\ITokenFactory;
-use ash\token\BinaryOperatorLiteral;
-use ash\token\AccessGroup;
-use ash\token\Expression;
-use ash\token\ExpressionGroup;
-use ash\token\NumberLiteral;
-use ash\token\NameLiteral;
-use ash\token\CallGroup;
-use ash\token\ExpressionList;
 
 
 
@@ -34,15 +27,19 @@ extends TestCase
 			)
 			->willReturnCallback(function(string $name, array $args) use ($factory) {
 				switch ($name) {
-					case 'expression' : return new Expression($factory, $args);
-					case 'numberLiteral' : return new NumberLiteral();
-					case 'nameLiteral' : return new NameLiteral();
-					case 'binaryOperatorLiteral' : return new BinaryOperatorLiteral();
-					case 'accessGroup' : return new AccessGroup($factory);
-					case 'expressionGroup' : return new ExpressionGroup($factory);
-					case 'callGroup' : return new CallGroup($factory);
-					case 'expressionList' : return new ExpressionList($factory, $args);
-					default : $this->fail($name);
+					case 'expression' : return new token\Expression($factory, $args);
+					case 'numberLiteral' : return new token\NumberLiteral();
+					case 'stringLiteral' : return new token\StringLiteral();
+					case 'nameLiteral' : return new token\NameLiteral();
+					case 'binaryOperatorLiteral' : return new token\BinaryOperatorLiteral();
+					case 'accessGroup' : return new token\AccessGroup($factory);
+					case 'expressionGroup' : return new token\ExpressionGroup($factory);
+					case 'callGroup' : return new token\CallGroup($factory);
+					case 'expressionList' : return new token\ExpressionList($factory, $args);
+					default :
+						$this->fail($name);
+
+						return;
 				}
 			});
 
@@ -309,6 +306,58 @@ extends TestCase
 	}
 
 
+	public function testParseStringLiteralApos() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [[
+				'type' => IToken::TOKEN_STRING_LITERAL,
+				'data' => '\'foo\''
+			]]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('\'foo\'')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' \'foo\' ')->getProjection());
+
+		$this->assertEquals('\'foo\'', $parser->parse('\'foo\'')->getChars());
+	}
+
+	public function testParseStringLiteralQuot() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [[
+				'type' => IToken::TOKEN_STRING_LITERAL,
+				'data' => '"foo"'
+			]]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('"foo"')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' "foo" ')->getProjection());
+
+		$this->assertEquals('"foo"', $parser->parse('"foo"')->getChars());
+	}
+
+	public function testParseStringLiteralEscaping() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [[
+				'type' => IToken::TOKEN_STRING_LITERAL,
+				'data' => '"foo bar \\" baz \\qux \\\\"'
+			]]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('"foo bar \\" baz \\qux \\\\"')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' "foo bar \\" baz \\qux \\\\" ')->getProjection());
+
+		$this->assertEquals('"foo bar \\" baz \\qux \\\\"', $parser->parse(' "foo bar \\" baz \\qux \\\\" ')->getChars());
+	}
+
+
 	public function testParseNameLiteral() {
 		$ast = [
 			'type' => IToken::TOKEN_EXPRESSION,
@@ -326,7 +375,7 @@ extends TestCase
 		$this->assertEquals('foo', $parser->parse('foo')->getChars());
 	}
 
-	public function testParseMemberAccess() {
+	public function testParseAccess() {
 		$ast = [
 			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [[
@@ -357,7 +406,7 @@ extends TestCase
 		$this->assertEquals('foo . bar . baz', $parser->parse('foo.bar.baz')->getChars());
 	}
 
-	public function testParseMemberExpression() {
+	public function testParseAccessExpression() {
 		$ast = [
 			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [[
@@ -390,7 +439,7 @@ extends TestCase
 		$this->assertEquals('foo [bar] . baz', $parser->parse('foo[bar].baz')->getChars());
 	}
 
-	public function testMemberExpressionChain() {
+	public function testParseAccessExpressionChain() {
 		$ast = [
 			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [[
@@ -424,6 +473,33 @@ extends TestCase
 		$this->assertEquals($ast, $parser->parse('foo[ bar ][ baz ]')->getProjection());
 
 		$this->assertEquals('foo [bar] [baz]', $parser->parse('foo[bar][baz]')->getChars());
+	}
+
+	public function testParseAccessExpressionValue() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [[
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_ACCESS_GROUP,
+				'data' => [
+					'type' => IToken::TOKEN_EXPRESSION,
+					'data' => [[
+						'type' => IToken::TOKEN_STRING_LITERAL,
+						'data' => '"bar"'
+					]]
+				]
+			]]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('foo["bar"]')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' foo [ "bar" ] ')->getProjection());
+		$this->assertEquals($ast, $parser->parse('foo[ "bar" ]')->getProjection());
+
+		$this->assertEquals('foo ["bar"]', $parser->parse('foo["bar"]')->getChars());
 	}
 
 
