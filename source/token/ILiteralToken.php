@@ -14,6 +14,8 @@ extends IToken
 
 	const TYPE_FLOAT = 4;
 
+	const TYPE_STRING = 6;
+
 	const TYPE_NAME = 5;
 
 
