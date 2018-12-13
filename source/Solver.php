@@ -30,6 +30,14 @@ implements ISolver
 			in_array(gettype($b), $filter);
 	}
 
+	private function _getArithmeticError($a, $b) {
+		return new \ErrorException(sprintf(
+			'EXPR undefined for "%s", "%s"',
+			gettype($a),
+			gettype($b)
+		));
+	}
+
 
 	private function _opAccess(array $source, $prop) {
 		if (!array_key_exists($prop, $source)) throw new \ErrorException(sprintf(
@@ -46,31 +54,31 @@ implements ISolver
 	}
 
 	private function _opMul($a, $b) {
-		if (!$this->_isArithmeticArgs($a, $b)) throw new \ErrorException();
+		if (!$this->_isArithmeticArgs($a, $b)) throw $this->_getArithmeticError($a, $b);
 
 		return $a * $b;
 	}
 
 	private function _opDiv($a, $b) {
-		if (!$this->_isArithmeticArgs($a, $b)) throw new \ErrorException();
+		if (!$this->_isArithmeticArgs($a, $b)) throw $this->_getArithmeticError($a, $b);
 
 		return empty($b) ? $a / abs($a) * INF : $a / $b;
 	}
 
 	private function _opMod($a, $b) {
-		if (!$this->_isArithmeticArgs($a, $b)) throw new \ErrorException();
+		if (!$this->_isArithmeticArgs($a, $b)) throw $this->_getArithmeticError($a, $b);
 
 		return empty($b) ? NAN : $a % $b;
 	}
 
 	private function _opAdd($a, $b) {
-		if (!$this->_isArithmeticArgs($a, $b)) throw new \ErrorException();
+		if (!$this->_isArithmeticArgs($a, $b)) throw $this->_getArithmeticError($a, $b);
 
 		return $a + $b;
 	}
 
 	private function _opSub($a, $b) {
-		if (!$this->_isArithmeticArgs($a, $b)) throw new \ErrorException();
+		if (!$this->_isArithmeticArgs($a, $b)) throw $this->_getArithmeticError($a, $b);
 
 		return $a - $b;
 	}
