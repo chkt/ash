@@ -1,13 +1,14 @@
 <?php
 
-namespace test\model\expr;
+namespace test;
 
-use ash\token\IValueToken;
 use PHPUnit\Framework\TestCase;
-use ash\token\IListToken;
-use ash\token\IOperationToken;
 use ash\Solver;
 use ash\token\IToken;
+use ash\token\IListToken;
+use ash\token\IOperationToken;
+use ash\token\IValueToken;
+
 
 
 
@@ -169,6 +170,18 @@ extends TestCase
 		$this->assertEquals(120.012e-120, $solver->resolve($context));
 	}
 
+	public function testSolveString() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_VALUE,
+			'data' => 'foo'
+		]);
+		$context = [];
+
+		$solver = $this->_produceSolver($expr);
+
+		$this->assertEquals('foo', $solver->resolve($context));
+	}
+
 
 	public function testSolveName() {
 		$expr = $this->_produceExpression([
@@ -241,6 +254,29 @@ extends TestCase
 		$solver->resolve($context);
 	}
 
+	public function testSolveAccess_noName() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '.'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'bar'
+			]]
+		]);
+
+		$context = [ 'foo' => [ 'bar' => 'baz' ]];
+		$solver = $this->_produceSolver($expr);
+
+		$this->expectException(\TypeError::class);
+
+		$solver->resolve($context);
+	}
+
 	public function testSolveAccessExpression() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
@@ -273,6 +309,46 @@ extends TestCase
 		$this->assertEquals('foo', $solver->resolve($context));
 	}
 
+	public function testSolveAccessIntExpression() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '[...]'
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 0
+			]]
+		]);
+		$context = [ 'foo' => [ 'bar' ]];
+
+		$solver = $this->_produceSolver($expr);
+		$this->assertEquals('bar', $solver->resolve($context));
+	}
+
+	public function testSolveAccessStringExpression() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '[...]'
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'foo'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 'bar'
+			]]
+		]);
+		$context = [ 'foo' => [ 'bar' => 'baz' ]];
+
+		$solver = $this->_produceSolver($expr);
+		$this->assertEquals('baz', $solver->resolve($context));
+	}
+
 
 	public function testSolveOperation() {
 		$expr = $this->_produceExpression([
@@ -293,6 +369,30 @@ extends TestCase
 		$solver = $this->_produceSolver($expr);
 		$this->assertEquals(15, $solver->resolve($context));
 	}
+
+	public function testSolveOperation_badType() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '*'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 1.0
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 'bar'
+			]]
+		]);
+		$context = [];
+		$solver = $this->_produceSolver($expr);
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR undefined for "double", "string"');
+
+		$solver->resolve($context);
+	}
+
 
 	public function testSolveOperationPrecedence() {
 		$expr = $this->_produceExpression([
