@@ -31,6 +31,8 @@ extends AListToken
 			case '7' :
 			case '8' :
 			case '9' : return 'numberLiteral';
+			case '\'' :
+			case '"' : return 'stringLiteral';
 			default : return 'nameLiteral';
 		}
 	}
