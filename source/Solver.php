@@ -90,7 +90,10 @@ implements ISolver
 		switch ($type) {
 			case IToken::TOKEN_NAME_LITERAL : return $token->getChars();
 
-			default : throw new \ErrorException($type);
+			default : throw new \ErrorException(sprintf(
+				'EXPR malformed accessor "%s"',
+				$token->getChars()
+			));
 		}
 	}
 
