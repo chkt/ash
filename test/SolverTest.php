@@ -42,6 +42,10 @@ extends TestCase
 			->willReturn($type);
 
 		$token
+			->method('getChars')
+			->willReturn((string) $value);
+
+		$token
 			->method('getValue')
 			->willReturn($value);
 
@@ -209,7 +213,7 @@ extends TestCase
 		$solver->resolve($context);
 	}
 
-	public function testSolveAccess() {
+	public function testSolveAccess_name() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
@@ -230,7 +234,7 @@ extends TestCase
 		$this->assertEquals('foo', $solver->resolve($context));
 	}
 
-	public function testSolveAccess_error() {
+	public function testSolveAccess_errorNoProp() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
@@ -254,7 +258,7 @@ extends TestCase
 		$solver->resolve($context);
 	}
 
-	public function testSolveAccess_noName() {
+	public function testSolveAccess_errorNotAccessible() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
@@ -276,6 +280,31 @@ extends TestCase
 
 		$solver->resolve($context);
 	}
+
+	public function testSolveAccess_errorNoName() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [[
+				'type' => IToken::TOKEN_OPERATOR,
+				'data' => '.'
+			], [
+				'type' => IToken::TOKEN_NAME_LITERAL,
+				'data' => 'bar'
+			], [
+				'type' => IToken::TOKEN_VALUE,
+				'data' => 1
+			]]
+		]);
+
+		$context = [ 'bar' => [ 'baz', 'foo' ]];
+		$solver = $this->_produceSolver($expr);
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR malformed accessor "1"');
+
+		$solver->resolve($context);
+	}
+
 
 	public function testSolveAccessExpression() {
 		$expr = $this->_produceExpression([
@@ -520,7 +549,7 @@ extends TestCase
 					'type' => IToken::TOKEN_OPERATOR,
 					'data' => 'call'
 				], [
-					'type' => ITOKEN::TOKEN_NAME_LITERAL,
+					'type' => IToken::TOKEN_NAME_LITERAL,
 					'data' => 'foo'
 				], [
 					'type' => IToken::TOKEN_EXPRESSION_LIST,
