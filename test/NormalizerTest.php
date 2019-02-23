@@ -442,7 +442,7 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => '+'
+				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'a'
@@ -450,7 +450,7 @@ extends TestCase
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
 					'type' => IToken::TOKEN_OPERATOR,
-					'data' => '*'
+					'data' => 'mul'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
 					'data' => 'b'
@@ -492,12 +492,12 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => '.'
+				'data' => 'acc'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
 					'type' => IToken::TOKEN_OPERATOR,
-					'data' => '[...]'
+					'data' => 'ace'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
 					'data' => 'foo'
@@ -537,7 +537,7 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => '[...]'
+				'data' => 'ace'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'foo'
@@ -582,12 +582,12 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => '*'
+				'data' => 'mul'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
 					'type' => IToken::TOKEN_OPERATOR,
-					'data' => '+'
+					'data' => 'add'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
 					'data' => 'a'
@@ -625,7 +625,7 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => '+'
+				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'foo'
@@ -659,7 +659,7 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => '+'
+				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_VALUE,
 				'data' => 1200
@@ -706,7 +706,7 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => 'call'
+				'data' => 'run'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'foo'
@@ -756,12 +756,12 @@ extends TestCase
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
 				'type' => IToken::TOKEN_OPERATOR,
-				'data' => 'call'
+				'data' => 'run'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
 					'type' => IToken::TOKEN_OPERATOR,
-					'data' => 'call'
+					'data' => 'run'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
 					'data' => 'foo'
