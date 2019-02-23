@@ -24,31 +24,42 @@ implements INormalizer
 	}
 
 
+	private function _getOperatorCode(string $symbol) : string {
+		return [
+			'+' => 'add',
+			'*' => 'mul',
+			'-' => 'sub',
+			'/' => 'div',
+			'%' => 'mod',
+			'.' => 'acc'
+		][$symbol];
+	}
+
 	private function _getOperatorPrecedence(string $op) : int {
 		return [
-			'group' => 4,
-			'.'     => 3,
-			'[...]' => 3,
-			'call'  => 3,
-			'*'     => 2,
-			'/'     => 2,
-			'%'     => 2,
-			'+'     => 1,
-			'-'     => 1
+			'grp' => 4,
+			'acc' => 3,
+			'ace' => 3,
+			'run' => 3,
+			'mul' => 2,
+			'div' => 2,
+			'mod' => 2,
+			'add' => 1,
+			'sub' => 1
 		][$op];
 	}
 
 	private function _getOperatorAssociativity(string $op) : int {
 		return [
-			'group' => 0,
-			'.'     => 1,
-			'[...]' => 1,
-			'call'  => 1,
-			'*'     => 1,
-			'/'     => 1,
-			'%'     => 1,
-			'+'     => 1,
-			'-'     => 1
+			'grp' => 0,
+			'acc' => 1,
+			'ace' => 1,
+			'run' => 1,
+			'mul' => 1,
+			'div' => 1,
+			'mod' => 1,
+			'add' => 1,
+			'sub' => 1
 		][$op];
 	}
 
@@ -69,7 +80,7 @@ implements INormalizer
 
 		if ($left instanceof IOperationToken) $leftPrec = $left->getOperator()->getPrecedence();
 
-		if (!($op instanceof IOperatorToken)) $op = $this->_produceOperator($op->getChars());
+		if (!($op instanceof IOperatorToken)) $op = $this->_produceOperator($this->_getOperatorCode($op->getChars()));
 
 		$opPrec = $op->getPrecedence();
 
@@ -102,14 +113,14 @@ implements INormalizer
 
 
 	private function _composeAccess(IToken $scope, IGroupToken $access) : IToken {
-		$op = $this->_produceOperator('[...]');
+		$op = $this->_produceOperator('ace');
 		$prop = $this->_resolveExpression($access->getChild());
 
 		return $this->_composeBinaryOperation($op, $scope, $prop);
 	}
 
 	private function _composeCall(IToken $scope, IGroupToken $call) : IToken {
-		$op = $this->_produceOperator('call');
+		$op = $this->_produceOperator('run');
 		$args = $this->_resolveExpressionList($call->getChild());
 
 		return $this->_composeBinaryOperation($op, $scope, $args);
@@ -170,8 +181,8 @@ implements INormalizer
 			$token = $this->_factory->produce('binaryOperation', [
 				$this->_produceOperator(
 					$op->getChars(),
-					$this->_getOperatorPrecedence('group'),
-					$this->_getOperatorAssociativity('group')
+					$this->_getOperatorPrecedence('grp'),
+					$this->_getOperatorAssociativity('grp')
 				),
 				$token->getOperandAt(IOperationToken::OPERAND_BINARY_BEFORE),
 				$token->getOperandAt(IOperationToken::OPERAND_BINARY_AFTER)
