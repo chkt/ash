@@ -3,6 +3,7 @@
 namespace test;
 
 use PHPUnit\Framework\TestCase;
+use eve\common\factory\ISimpleFactory;
 use eve\common\factory\IBaseFactory;
 use ash\ITokenizer;
 use ash\INormalizer;
@@ -17,10 +18,16 @@ final class ParserFactoryTest
 extends TestCase
 {
 
-	private function _mockInterface(string $qname, array $args) {
+	private function _mockInterface(string $qname, array $args = []) {
 		$ins = $this
 			->getMockBuilder($qname)
 			->getMock();
+
+		foreach ($args as $key => $value) {
+			if (is_int($key)) $key = 'p' . $key;
+
+			$ins->$key = $value;
+		}
 
 		return $ins;
 	}
@@ -53,12 +60,18 @@ extends TestCase
 		return $base;
 	}
 
+	private function _mockApiFactory() {
+		$factory = $this->_mockInterface(ISimpleFactory::class);
 
-	private function _produceFactory(IBaseFactory $baseFactory = null) {
+		return $factory;
+	}
+
+
+	private function _produceFactory(IBaseFactory $baseFactory = null, ISimpleFactory $apiFactory = null) {
 		if (is_null($baseFactory)) $baseFactory = $this->_mockBaseFactory();
+		if (is_null($apiFactory)) $apiFactory = $this->_mockApiFactory();
 
-
-		return new ParserFactory($baseFactory);
+		return new ParserFactory($baseFactory, $apiFactory);
 	}
 
 
@@ -67,5 +80,11 @@ extends TestCase
 		$parser = $factory->produce();
 
 		$this->assertInstanceOf(IParser::class, $parser);
+		$this->assertObjectHasAttribute('p0', $parser);
+		$this->assertInstanceOf(ITokenizer::class, $parser->p0);
+		$this->assertObjectHasAttribute('p1', $parser);
+		$this->assertInstanceOf(INormalizer::class, $parser->p1);
+		$this->assertObjectHasAttribute('p2', $parser);
+		$this->assertInstanceOf(ISolverFactory::class, $parser->p2);
 	}
 }
