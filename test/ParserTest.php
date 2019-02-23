@@ -2,14 +2,16 @@
 
 namespace test;
 
+use PHPUnit\Framework\TestCase;
+use eve\common\factory;
+use eve\common\access;
+use ash\api;
 use ash\IParser;
 use ash\Normalizer;
 use ash\Parser;
 use ash\SolverFactory;
 use ash\token\TokenFactory;
 use ash\Tokenizer;
-use eve\common\factory\IBaseFactory;
-use PHPUnit\Framework\TestCase;
 
 
 
@@ -17,34 +19,33 @@ final class ParserTest
 extends TestCase
 {
 
-	private function _mockBaseFactory() {
-		$base = $this
-			->getMockBuilder(IBaseFactory::class)
-			->getMock();
+	private function _produceBaseFactory() : factory\BaseFactory {
+		return new factory\BaseFactory();
+	}
 
-		$base
-			->method('produce')
-			->with(
-				$this->isType('string'),
-				$this->isType('array')
-			)
-			->willReturnCallback(function(string $qname, array $args) {
-				return new $qname(...$args);
-			});
-
-		return $base;
+	private function _produceAccessorFactory(factory\IBaseFactory $base) : access\factory\TraversableAccessorFactory {
+		return new access\factory\TraversableAccessorFactory($base);
 	}
 
 
-	private function _produceParser(IBaseFactory $baseFactory = null) : IParser {
-		if (is_null($baseFactory)) $baseFactory = $this->_mockBaseFactory();
+	private function _produceParser(
+		factory\IBaseFactory $baseFactory = null,
+		access\operator\IItemAccessorSurrogate $accessorFactory = null
+	) : IParser {
+		if (is_null($baseFactory)) $baseFactory = $this->_produceBaseFactory();
+		if (is_null($accessorFactory)) $accessorFactory = $this->_produceAccessorFactory($baseFactory);
 
 		$tokens = $baseFactory->produce(TokenFactory::class, [ $baseFactory ]);
 
 		return $baseFactory->produce(Parser::class, [
 			$baseFactory->produce(Tokenizer::class, [ $tokens ]),
 			$baseFactory->produce(Normalizer::class, [ $tokens ]),
-			$baseFactory->produce(SolverFactory::class, [ $baseFactory ])
+			$baseFactory->produce(SolverFactory::class, [
+				$baseFactory,
+				$baseFactory
+					->produce(api\ApiFactory::class,[ $baseFactory, $accessorFactory ])
+					->produce(),
+			])
 		]);
 	}
 
