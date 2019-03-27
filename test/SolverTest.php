@@ -546,4 +546,18 @@ extends TestCase
 		$solver = $this->_produceSolver($expr);
 		$this->assertEquals('baz', $solver->resolve($context));
 	}
+
+
+	public function testCastString() {
+		$token = $this
+			->getMockBuilder(IToken::class)
+			->getMock();
+
+		$token
+			->method('getChars')
+			->willReturn('foo');
+
+		$solver = $this->_produceSolver($token);
+		$this->assertEquals('foo', (string) $solver);
+	}
 }
