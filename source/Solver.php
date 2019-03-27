@@ -122,4 +122,9 @@ implements ISolver
 
 		return $this->_resolveExpression($this->_root);
 	}
+
+
+	public function __toString() : string {
+		return $this->_root->getChars();
+	}
 }
