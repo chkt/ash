@@ -21,6 +21,13 @@ extends TestCase
 		return $factory->produce();
 	}
 
+	public function testGetBoolApi() {
+		$host = $this->_produceHost();
+		$api = $host->getItem('op-bool');
+
+		$this->assertInstanceOf(api\BoolOps::class, $api);
+	}
+
 
 	public function testGetIntApi() {
 		$host = $this->_produceHost();

@@ -28,6 +28,7 @@ implements ISimpleFactory
 	public function produce(array& $config = []) {
 		$base = $this->_base;
 		$map = [
+			'op-bool' => BoolOps::class,
 			'op-int' => IntOps::class,
 			'op-float' => FloatOps::class,
 			'op-array' => ArrayOps::class,
