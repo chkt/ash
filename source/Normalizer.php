@@ -96,6 +96,28 @@ implements INormalizer
 		]);
 	}
 
+	private function _composeTernaryOperation(IToken $test, IGroupToken $group) : IToken {
+		$options = $group->getChild();
+
+		if ($options instanceof IListToken && $options->numChildren() === 2) {
+			$children = $options->getChildren();
+
+			if (
+				count($children) === 2 &&
+				$children[0] instanceof IListToken &&
+				$children[1] instanceof IListToken
+			) {
+				return $this->_factory->produce('ternaryOperation', [
+					$test,
+					$this->_resolveExpression($children[0]),
+					$this->_resolveExpression($children[1])
+				]);
+			}
+		}
+
+		throw new \ErrorException($group->getType());
+	}
+
 
 	private function _composeValue(ILiteralToken $token) : IToken {
 		$type = $token->getValueType();
@@ -152,9 +174,13 @@ implements INormalizer
 			$type = $token->getType();
 
 			switch ($type) {
-				case IToken::TOKEN_OPERATOR :
+				case IToken::TOKEN_BINARY_OPERATOR :
 					$next = $this->_resolveExpressionOperand($tokens[++$i]);
 					$prev = $this->_composeBinaryOperation($token, $prev, $next);
+					break;
+
+				case IToken::TOKEN_TERNARY_GROUP:
+					$prev = $this->_composeTernaryOperation($prev, $token);
 					break;
 
 				case IToken::TOKEN_ACCESS_GROUP :
@@ -218,7 +244,7 @@ implements INormalizer
 				return $this->_resolveExpressionList($token);
 
 			case IToken::TOKEN_NAME_LITERAL :
-			case IToken::TOKEN_OPERATOR :
+			case IToken::TOKEN_BINARY_OPERATOR :
 				return $token;
 
 			case IToken::TOKEN_NUMBER_LITERAL :

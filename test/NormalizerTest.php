@@ -135,6 +135,7 @@ extends TestCase
 					case 'binaryOperatorLiteral' : return new token\BinaryOperatorLiteral();
 					case 'operator' : return new token\Operator($factory, $args);
 					case 'binaryOperation' : return new token\BinaryOperation($factory, $args);
+					case 'ternaryOperation' : return new token\TernaryOperation($factory, $args);
 					case 'integerValue' : return new token\IntegerValue($factory, $args);
 					case 'floatValue' : return new token\FloatValue($factory, $args);
 					case 'stringValue' : return new token\StringValue($factory, $args);
@@ -248,7 +249,7 @@ extends TestCase
 
 	public function testNormalizeOperator() {
 		$token = [
-			'type' => IToken::TOKEN_OPERATOR,
+			'type' => IToken::TOKEN_BINARY_OPERATOR,
 			'data' => '+'
 		];
 
@@ -418,20 +419,20 @@ extends TestCase
 	}
 
 
-	public function testNormalizeOperation() {
+	public function testNormalizeBinaryOperation() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [[
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'a'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '+'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'b'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '*'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -441,7 +442,7 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -449,7 +450,7 @@ extends TestCase
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
-					'type' => IToken::TOKEN_OPERATOR,
+					'type' => IToken::TOKEN_BINARY_OPERATOR,
 					'data' => 'mul'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
@@ -459,6 +460,32 @@ extends TestCase
 					'data' => 'c'
 				]]
 			]]
+		];
+
+		$fast = $this->_produceNormalizer()->transform($expr);
+		$this->assertEquals($ast, $fast->getProjection());
+	}
+
+	public function testNormalizeTernaryOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
+				['type' => IToken::TOKEN_TERNARY_GROUP, 'data' =>
+					['type' => IToken::TOKEN_TERNARY_LIST, 'data' => [
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [ ['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b'] ]],
+						['type' => Itoken::TOKEN_EXPRESSION, 'data' => [ ['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'c'] ]]
+					]]
+				]
+			]
+		]);
+		$ast = [
+			'type' => IToken::TOKEN_TERNARY_OPERATION,
+			'data' => [
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'c']
+			]
 		];
 
 		$fast = $this->_produceNormalizer()->transform($expr);
@@ -481,7 +508,7 @@ extends TestCase
 					]]
 				]
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '.'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -491,12 +518,12 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'acc'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
-					'type' => IToken::TOKEN_OPERATOR,
+					'type' => IToken::TOKEN_BINARY_OPERATOR,
 					'data' => 'ace'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
@@ -536,7 +563,7 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'ace'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -562,7 +589,7 @@ extends TestCase
 						'type' => IToken::TOKEN_NAME_LITERAL,
 						'data' => 'a'
 					], [
-						'type' => IToken::TOKEN_OPERATOR,
+						'type' => IToken::TOKEN_BINARY_OPERATOR,
 						'data' => '+'
 					], [
 						'type' => IToken::TOKEN_NAME_LITERAL,
@@ -570,7 +597,7 @@ extends TestCase
 					]]
 				]
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '*'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -581,12 +608,12 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'mul'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
-					'type' => IToken::TOKEN_OPERATOR,
+					'type' => IToken::TOKEN_BINARY_OPERATOR,
 					'data' => 'add'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
@@ -613,7 +640,7 @@ extends TestCase
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'foo'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '+'
 			], [
 				'type' => IToken::TOKEN_NUMBER_LITERAL,
@@ -624,7 +651,7 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -648,7 +675,7 @@ extends TestCase
 				'data' => '1200',
 				'value' => ILiteralToken::TYPE_INT_DEC
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '+'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -658,7 +685,7 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_VALUE,
@@ -705,7 +732,7 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'run'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -755,12 +782,12 @@ extends TestCase
 		$ast = [
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'run'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
-					'type' => IToken::TOKEN_OPERATOR,
+					'type' => IToken::TOKEN_BINARY_OPERATOR,
 					'data' => 'run'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,

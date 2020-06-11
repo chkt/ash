@@ -41,6 +41,7 @@ extends AListToken
 		switch ($char) {
 			case '[' : return 'accessGroup';
 			case '(' : return 'callGroup';
+			case '?' : return 'ternaryGroup';
 			default : return 'binaryOperatorLiteral';
 		}
 	}
@@ -62,7 +63,7 @@ extends AListToken
 			case IToken::TOKEN_CALL_GROUP :
 				return $this->_getOperandSuccessor($char);
 
-			case IToken::TOKEN_OPERATOR :
+			case IToken::TOKEN_BINARY_OPERATOR :
 				return $this->_getOperatorSuccessor($char);
 
 			default : throw new \ErrorException($type);

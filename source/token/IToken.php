@@ -13,10 +13,12 @@ extends IProjectable
 	const TOKEN_EXPRESSION = 1;
 
 	const TOKEN_EXPRESSION_GROUP = 2;
+	const TOKEN_TERNARY_GROUP = 12;
 	const TOKEN_ACCESS_GROUP = 3;
 	const TOKEN_CALL_GROUP = 4;
 
 	const TOKEN_EXPRESSION_LIST = 5;
+	const TOKEN_TERNARY_LIST = 13;
 
 	const TOKEN_NUMBER_LITERAL = 6;
 	const TOKEN_STRING_LITERAL = 11;
@@ -24,8 +26,9 @@ extends IProjectable
 
 	const TOKEN_VALUE = 8;
 
-	const TOKEN_OPERATOR = 9;
+	const TOKEN_BINARY_OPERATOR = 9;
 	const TOKEN_BINARY_OPERATION = 10;
+	const TOKEN_TERNARY_OPERATION = 14;
 
 
 

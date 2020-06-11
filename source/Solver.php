@@ -2,6 +2,7 @@
 
 namespace ash;
 
+use ash\token\IBranchToken;
 use eve\common\IHost;
 use ash\api\IOps;
 use ash\token\IToken;
@@ -95,6 +96,19 @@ implements ISolver
 		));
 	}
 
+	private function _resolveTernaryOperation(IBranchToken $token) {
+		$test = $this->_resolveExpression($token->getTest());
+
+		$ops = $this->_getOps('bool');
+		$name = $ops->getMethodName('bool', $this->_getType($test));
+
+		if (method_exists($ops, $name)) return $this->_resolveExpression($token->getBranchAt($ops->$name($test) ? 0 : 1));
+		else throw new \ErrorException(sprintf(
+			'EXPR no op "from %s"',
+			$this->_getType($test)
+		));
+	}
+
 	private function _resolveExpressionList(IListToken $token) : array {
 		$res = [];
 
@@ -112,6 +126,7 @@ implements ISolver
 				->accString($this->_context, $token->getChars());
 			case IToken::TOKEN_VALUE : return $token->getValue();
 			case IToken::TOKEN_BINARY_OPERATION : return $this->_resolveBinaryOperation($token);
+			case IToken::TOKEN_TERNARY_OPERATION : return $this->_resolveTernaryOperation($token);
 			default : throw new \ErrorException($type);
 		}
 	}

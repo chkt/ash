@@ -1,6 +1,6 @@
 <?php
 
-namespace test\model\expr;
+namespace test;
 
 use PHPUnit\Framework\TestCase;
 use ash\Tokenizer;
@@ -34,8 +34,10 @@ extends TestCase
 					case 'binaryOperatorLiteral' : return new token\BinaryOperatorLiteral();
 					case 'accessGroup' : return new token\AccessGroup($factory);
 					case 'expressionGroup' : return new token\ExpressionGroup($factory);
+					case 'ternaryGroup' : return new token\TernaryGroup($factory);
 					case 'callGroup' : return new token\CallGroup($factory);
 					case 'expressionList' : return new token\ExpressionList($factory, $args);
+					case 'ternaryList' : return new token\TernaryList($factory, $args);
 					default :
 						$this->fail($name);
 
@@ -382,13 +384,13 @@ extends TestCase
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'foo'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '.'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'bar'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '.'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -422,7 +424,7 @@ extends TestCase
 					]]
 				]
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '.'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -503,20 +505,20 @@ extends TestCase
 	}
 
 
-	public function testParseOperationNameName() {
+	public function testParseBinaryNameName() {
 		$ast = [
 			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [[
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'a'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '+'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'b'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '*'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -532,14 +534,14 @@ extends TestCase
 		$this->assertEquals('a + b * c', $parser->parse('a+b*c')->getChars());
 	}
 
-	public function testParseOperationNameNumber() {
+	public function testParseBinaryNameNumber() {
 		$ast = [
 			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [[
 				'type' => IToken::TOKEN_NAME_LITERAL,
 				'data' => 'a'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '+'
 			], [
 				'type' => Itoken::TOKEN_NUMBER_LITERAL,
@@ -555,14 +557,14 @@ extends TestCase
 		$this->assertEquals('a + 1.2', $parser->parse(' a + 1.2 ')->getChars());
 	}
 
-	public function testParseOperationNumberName() {
+	public function testParseBinaryNumberName() {
 		$ast = [
 			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [[
 				'type' => IToken::TOKEN_NUMBER_LITERAL,
 				'data' => '1.2'
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '+'
 			], [
 				'type' => Itoken::TOKEN_NAME_LITERAL,
@@ -578,7 +580,7 @@ extends TestCase
 		$this->assertEquals('1.2 + a', $parser->parse(' 1.2 + a ')->getChars());
 	}
 
-	public function testParseOperation_missingOperator() {
+	public function testParseBinary_missingOperator() {
 		$parser = $this->_produceParser();
 
 		$this->expectException(\ErrorException::class);
@@ -587,7 +589,7 @@ extends TestCase
 		$parser->parse('a b');
 	}
 
-	public function testParseOperation_leadingOperand() {
+	public function testParseBinary_leadingOperand() {
 		$parser = $this->_produceParser();
 
 		$this->expectException(\ErrorException::class);
@@ -596,13 +598,164 @@ extends TestCase
 		$parser->parse(' + b');
 	}
 
-	public function testParseOperation_trailingOperand() {
+	public function testParseBinary_trailingOperand() {
 		$parser = $this->_produceParser();
 
 		$this->expectException(\ErrorException::class);
 		$this->expectExceptionMessage('EXPR failure at 4: "a + "_""');
 
 		$parser->parse('a + ');
+	}
+
+	public function testParseTernaryNameNameName() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
+				['type' => IToken::TOKEN_TERNARY_GROUP, 'data' =>
+					[ 'type' => IToken::TOKEN_TERNARY_LIST, 'data' => [
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b']]],
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'c']]]
+					]]
+				]
+			]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('a?b:c')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' a ? b : c ')->getProjection());
+
+		$this->assertEquals('a ?b: c', $parser->parse(' a ? b : c ')->getChars());
+	}
+
+	public function testParseTernaryNameNameNumber() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
+				['type' => IToken::TOKEN_TERNARY_GROUP, 'data' =>
+					[ 'type' => IToken::TOKEN_TERNARY_LIST, 'data' => [
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b']]],
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NUMBER_LITERAL, 'data' => '1.2']]]
+					]]
+				]
+			]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('a?b:1.2')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' a ? b : 1.2 ')->getProjection());
+
+		$this->assertEquals('a ?b: 1.2', $parser->parse(' a ? b : 1.2 ')->getChars());
+	}
+
+	public function testParseTernaryNameNumberName() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
+				['type' => IToken::TOKEN_TERNARY_GROUP, 'data' =>
+					[ 'type' => IToken::TOKEN_TERNARY_LIST, 'data' => [
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NUMBER_LITERAL, 'data' => '1.2']]],
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'c']]]
+					]]
+				]
+			]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('a?1.2:c')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' a ? 1.2 : c ')->getProjection());
+
+		$this->assertEquals('a ?1.2: c', $parser->parse(' a ? 1.2 : c ')->getChars());
+	}
+
+	public function testParseTernaryNumberNameName() {
+		$ast = [
+			'type' => IToken::TOKEN_EXPRESSION,
+			'data' => [
+				['type' => IToken::TOKEN_NUMBER_LITERAL, 'data' => '1.2'],
+				['type' => IToken::TOKEN_TERNARY_GROUP, 'data' =>
+					[ 'type' => IToken::TOKEN_TERNARY_LIST, 'data' => [
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b']]],
+						['type' => IToken::TOKEN_EXPRESSION, 'data' => [['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'c']]]
+					]]
+				]
+			]
+		];
+
+		$parser = $this->_produceParser();
+
+		$this->assertEquals($ast, $parser->parse('1.2?b:c')->getProjection());
+		$this->assertEquals($ast, $parser->parse(' 1.2 ? b : c ')->getProjection());
+
+		$this->assertEquals('1.2 ?b: c', $parser->parse(' 1.2 ? b : c ')->getChars());
+	}
+
+	public function testParseTernary_missingTest() {
+		$parser = $this->_produceParser();
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR failure at 3: " b "_": c"');
+
+		$parser->parse(' b : c');
+	}
+
+	public function testParseTernary_missingDefault() {
+		$parser = $this->_produceParser();
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR failure at 4: "a ? "_": c"');
+
+		$parser->parse('a ? : c');
+	}
+
+	public function testParseTernary_missingAlternative() {
+		$parser = $this->_produceParser();
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR failure at 6: "a ? b "_""');
+
+		$parser->parse('a ? b ');
+	}
+
+	public function testParseTernary_leadingTest() {
+		$parser = $this->_produceParser();
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR failure at 1: " "_"? b"');
+
+		$parser->parse(' ? b');
+	}
+
+	public function testParseTernary_trailingTest() {
+		$parser = $this->_produceParser();
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR failure at 4: "a ? "_""');
+
+		$parser->parse('a ? ');
+	}
+
+	public function testParseTernary_leadingAlternative() {
+		$parser = $this->_produceParser();
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR failure at 1: " "_": b"');
+
+		$parser->parse(' : b');
+	}
+
+	public function testParseTernary_trailingAlternative() {
+		$parser = $this->_produceParser();
+
+		$this->expectException(\ErrorException::class);
+		$this->expectExceptionMessage('EXPR failure at 4: "a : "_""');
+
+		$parser->parse('a : ');
 	}
 
 	public function testParseExpressionGroup() {
@@ -616,7 +769,7 @@ extends TestCase
 						'type' => IToken::TOKEN_NAME_LITERAL,
 						'data' => 'a'
 					], [
-						'type' => IToken::TOKEN_OPERATOR,
+						'type' => IToken::TOKEN_BINARY_OPERATOR,
 						'data' => '+'
 					], [
 						'type' => IToken::TOKEN_EXPRESSION_GROUP,
@@ -626,7 +779,7 @@ extends TestCase
 								'type' => IToken::TOKEN_NAME_LITERAL,
 								'data' => 'b'
 							], [
-								'type' => IToken::TOKEN_OPERATOR,
+								'type' => IToken::TOKEN_BINARY_OPERATOR,
 								'data' => '-'
 							], [
 								'type' => IToken::TOKEN_NAME_LITERAL,
@@ -658,7 +811,7 @@ extends TestCase
 						'type' => IToken::TOKEN_NAME_LITERAL,
 						'data' => 'a'
 					], [
-						'type' => IToken::TOKEN_OPERATOR,
+						'type' => IToken::TOKEN_BINARY_OPERATOR,
 						'data' => '+'
 					], [
 						'type' => IToken::TOKEN_NAME_LITERAL,
@@ -666,7 +819,7 @@ extends TestCase
 					]]
 				]
 			], [
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => '.'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -694,7 +847,7 @@ extends TestCase
 						'type' => IToken::TOKEN_NAME_LITERAL,
 						'data' => 'a'
 					], [
-						'type' => IToken::TOKEN_OPERATOR,
+						'type' => IToken::TOKEN_BINARY_OPERATOR,
 						'data' => '+'
 					], [
 						'type' => IToken::TOKEN_NAME_LITERAL,
@@ -859,7 +1012,7 @@ extends TestCase
 						'type' => IToken::TOKEN_NAME_LITERAL,
 						'data' => 'a'
 					], [
-						'type' => IToken::TOKEN_OPERATOR,
+						'type' => IToken::TOKEN_BINARY_OPERATOR,
 						'data' => '+'
 					], [
 						'type' => IToken::TOKEN_NAME_LITERAL,

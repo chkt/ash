@@ -95,6 +95,38 @@ extends TestCase
 		return $token;
 	}
 
+	private function _mockBranch(int $type, array $data) {
+		$children = [];
+
+		foreach ($data as $item) {
+			$childType = $item['type'];
+
+			if ($childType === IToken::TOKEN_NAME_LITERAL) $children[] = $this->_mockToken($childType, $item['data']);
+			else if ($childType === IToken::TOKEN_BINARY_OPERATION) $children[] = $this->_mockOperation($childType, $item['data']);
+			else $this->_fail($childType);
+		}
+
+		$branch = $this
+			->getMockBuilder(token\IBranchToken::class)
+			->getMock();
+
+		$branch
+			->method('getType')
+			->willReturn($type);
+
+		$branch
+			->method('getTest')
+			->willReturn($children[0]);
+
+		$branch
+			->method('getBranchAt')
+			->willReturnCallback(function(int $index) use ($children) {
+				return $children[$index + 1];
+			});
+
+		return $branch;
+	}
+
 	private function _mockList(int $type, array $data) {
 		$children = [];
 
@@ -195,11 +227,34 @@ extends TestCase
 		return $ops;
 	}
 
+	private function _mockBoolOps() {
+		$ops = $this
+			->getMockBuilder(api\IOps::class)
+			->setMethods([ 'getMethodName', 'boolInt' ])
+			->getMock();
+
+		$ops
+			->method('getMethodName')
+			->willReturnMap([
+				[ 'bool', 'int', 'boolInt' ]
+			]);
+
+		$ops
+			->method('boolInt')
+			->willReturnCallback(function(int $n) {
+				return $n !== 0;
+			});
+
+		return $ops;
+	}
+
 	private function _mockApi(
 		api\IOps $arrayOps = null,
 		api\IOps $intOps = null,
-		api\IOps $fnOps = null
+		api\IOps $fnOps = null,
+		api\IOps $boolOps = null
 	) {
+		if (is_null($boolOps)) $boolOps = $this->_mockBoolOps();
 		if (is_null($arrayOps)) $arrayOps = $this->_mockArrayOps();
 		if (is_null($intOps)) $intOps = $this->_mockIntOps();
 		if (is_null($fnOps)) $fnOps = $this->_mockFnOps();
@@ -211,6 +266,7 @@ extends TestCase
 		$api
 			->method('hasKey')
 			->willReturnMap([
+				[ 'op-bool', true ],
 				[ 'op-array', true ],
 				[ 'op-int', true ],
 				[ 'op-float', false],
@@ -220,6 +276,7 @@ extends TestCase
 		$api
 			->method('getItem')
 			->willReturnMap([
+				[ 'op-bool', $boolOps ],
 				[ 'op-array', $arrayOps ],
 				[ 'op-int', $intOps ],
 				[ 'op-fn', $fnOps ]
@@ -240,7 +297,7 @@ extends TestCase
 
 		switch ($type) {
 			case IToken::TOKEN_NAME_LITERAL :
-			case IToken::TOKEN_OPERATOR :
+			case IToken::TOKEN_BINARY_OPERATOR :
 				return $this->_mockToken($type, $ast['data']);
 
 			case IToken::TOKEN_VALUE :
@@ -248,6 +305,9 @@ extends TestCase
 
 			case IToken::TOKEN_BINARY_OPERATION :
 				return $this->_mockOperation($type, $ast['data']);
+
+			case IToken::TOKEN_TERNARY_OPERATION :
+				return $this->_mockBranch($type, $ast['data']);
 
 			case IToken::TOKEN_EXPRESSION_LIST :
 				return $this->_mockList($type, $ast['data']);
@@ -284,7 +344,7 @@ extends TestCase
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'acc'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -305,12 +365,12 @@ extends TestCase
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'acc'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
-					'type' => IToken::TOKEN_OPERATOR,
+					'type' => IToken::TOKEN_BINARY_OPERATOR,
 					'data' => 'ace'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
@@ -337,7 +397,7 @@ extends TestCase
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'ace'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -354,11 +414,11 @@ extends TestCase
 	}
 
 
-	public function testSolveOperation_name() {
+	public function testSolveBinaryOperation_name() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -374,11 +434,11 @@ extends TestCase
 		$this->assertEquals(3, $solver->resolve($context));
 	}
 
-	public function testSolveOperation_value() {
+	public function testSolveBinaryOperation_value() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_VALUE,
@@ -394,11 +454,11 @@ extends TestCase
 		$this->assertSame(1202, $solver->resolve([ 'foo' => 2 ]));
 	}
 
-	public function testSolveOperation_noApi() {
+	public function testSolveBinaryOperation_noApi() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_VALUE,
@@ -416,11 +476,11 @@ extends TestCase
 		$solver->resolve([]);
 	}
 
-	public function testSolveOperation_noType() {
+	public function testSolveBinaryOperation_noType() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'add'
 			], [
 				'type' => IToken::TOKEN_VALUE,
@@ -438,16 +498,16 @@ extends TestCase
 		$solver->resolve([]);
 	}
 
-	public function testSolveOperationTree() {
+	public function testSolveBinaryOperationTree() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'mul'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
-					'type' => IToken::TOKEN_OPERATOR,
+					'type' => IToken::TOKEN_BINARY_OPERATOR,
 					'data' => 'add'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,
@@ -468,11 +528,27 @@ extends TestCase
 	}
 
 
+	public function testSolveTernaryOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_TERNARY_OPERATION,
+			'data' => [
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'foo'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'bar'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'baz']
+			]
+		]);
+		$context = [ 'foo' => 1, 'bar' => 2, 'baz' => 3];
+
+		$solver = $this->_produceSolver($expr);
+		$this->assertEquals(2, $solver->resolve($context));
+	}
+
+
 	public function testCall() {
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'run'
 			], [
 				'type' => IToken::TOKEN_NAME_LITERAL,
@@ -485,7 +561,7 @@ extends TestCase
 				], [
 					'type' => IToken::TOKEN_BINARY_OPERATION,
 					'data' => [[
-						'type' => IToken::TOKEN_OPERATOR,
+						'type' => IToken::TOKEN_BINARY_OPERATOR,
 						'data' => 'add'
 					], [
 						'type' => IToken::TOKEN_NAME_LITERAL,
@@ -512,12 +588,12 @@ extends TestCase
 		$expr = $this->_produceExpression([
 			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [[
-				'type' => IToken::TOKEN_OPERATOR,
+				'type' => IToken::TOKEN_BINARY_OPERATOR,
 				'data' => 'run'
 			], [
 				'type' => IToken::TOKEN_BINARY_OPERATION,
 				'data' => [[
-					'type' => IToken::TOKEN_OPERATOR,
+					'type' => IToken::TOKEN_BINARY_OPERATOR,
 					'data' => 'run'
 				], [
 					'type' => IToken::TOKEN_NAME_LITERAL,

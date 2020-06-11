@@ -25,7 +25,7 @@ implements IOperatorToken
 
 
 	public function getType() : int {
-		return IToken::TOKEN_OPERATOR;
+		return IToken::TOKEN_BINARY_OPERATOR;
 	}
 
 	public function getChars() : string {
