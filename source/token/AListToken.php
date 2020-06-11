@@ -46,11 +46,16 @@ implements IListToken, IStreamToken
 		return $this->_tokens;
 	}
 
-
-	abstract protected function _hasInternalWS() : bool;
+	protected function _hasInternalWS() : bool {
+		return true;
+	}
 
 	protected function _getDelimiter() : string {
 		return '';
+	}
+
+	protected function _getMaxChildren() : int {
+		return PHP_INT_MAX;
 	}
 
 
@@ -91,7 +96,7 @@ implements IListToken, IStreamToken
 		if ($char === $delim) {
 			$this->_currentToken = null;
 
-			return true;
+			return count($this->_tokens) <= $this->_getMaxChildren();
 		}
 
 		if (ctype_space($char)) return $this->_hasInternalWS();
