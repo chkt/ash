@@ -45,4 +45,24 @@ extends TestCase
 		$this->assertEquals(true, $api->$method('false'));
 		$this->assertEquals(true, $api->$method('0'));
 	}
+
+	public function testTeqBoolBool() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('teq', 'bool');
+
+		$this->assertEquals(true, $api->$method(false, false));
+		$this->assertEquals(false, $api->$method(false, true));
+		$this->assertEquals(false, $api->$method(true, false));
+		$this->assertEquals(true, $api->$method(true, true));
+	}
+
+	public function testTneBoolBool() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('tne', 'bool');
+
+		$this->assertEquals(false, $api->$method(false, false));
+		$this->assertEquals(true, $api->$method(false, true));
+		$this->assertEquals(true, $api->$method(true, false));
+		$this->assertEquals(false, $api->$method(true, true));
+	}
 }

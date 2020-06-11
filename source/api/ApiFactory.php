@@ -31,6 +31,7 @@ implements ISimpleFactory
 			'op-bool' => BoolOps::class,
 			'op-int' => IntOps::class,
 			'op-float' => FloatOps::class,
+			'op-string' => StringOps::class,
 			'op-array' => ArrayOps::class,
 			'op-fn' => FnOps::class
 		];

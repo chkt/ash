@@ -43,6 +43,13 @@ extends TestCase
 		$this->assertInstanceOf(api\FloatOps::class, $api);
 	}
 
+	public function testGetStringApi() {
+		$host = $this->_produceHost();
+		$api = $host->getItem('op-string');
+
+		$this->assertInstanceOf(api\StringOps::class, $api);
+	}
+
 	public function testGetArrayApi() {
 		$host = $this->_produceHost();
 		$api = $host->getItem('op-array');

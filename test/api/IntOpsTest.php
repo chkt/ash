@@ -162,4 +162,76 @@ extends TestCase
 		$this->assertNan($val);
 		$this->assertInternalType('float', $val);
 	}
+
+	public function testLttIntInt() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('ltt', 'int');
+
+		$val = $api->$method(1, 2);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(2, 1));
+		$this->assertFalse($api->$method(2, 2));
+	}
+
+	public function testLteIntInt() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('lte', 'int');
+
+		$val = $api->$method(1, 2);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(2, 1));
+		$this->assertTrue($api->$method(2, 2));
+	}
+
+	public function testGttIntInt() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('gtt', 'int');
+
+		$val = $api->$method(2, 1);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(1, 2));
+		$this->assertFalse($api->$method(2, 2));
+	}
+
+	public function testGteIntInt() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('gte', 'int');
+
+		$val = $api->$method(2, 1);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(1, 2));
+		$this->assertTrue($api->$method(2, 2));
+	}
+
+	public function testTeqIntInt() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('teq', 'int');
+
+		$val = $api->$method(2, 2);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(1, 2));
+		$this->assertFalse($api->$method(2, 1));
+	}
+
+	public function testTneIntInt() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('tne', 'int');
+
+		$val = $api->$method(2, 2);
+		$this->assertFalse($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertTrue($api->$method(1, 2));
+		$this->assertTrue($api->$method(2, 1));
+	}
 }

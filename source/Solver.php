@@ -32,6 +32,7 @@ implements ISolver
 
 		switch ($type) {
 			case 'NULL' : return 'null';
+			case 'boolean' : return 'bool';
 			case 'integer' : return 'int';
 			case 'double' : return 'float';
 			case 'string' : return class_exists($value) ? $value : $type;		//TODO: technically all strings representing global functions or static methods are callable...

@@ -177,4 +177,94 @@ extends TestCase
 		$this->assertNan($val);
 		$this->assertInternalType('float', $val);
 	}
+
+	public function testLttFloatFloat() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('ltt', 'float');
+
+		$val = $api->$method(1.1, 2.2);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(2.2, 1.1));
+		$this->assertFalse($api->$method(2.2, 2.2));
+		$this->assertFalse($api->$method(NAN, 1.1));
+		$this->assertFalse($api->$method(2.2, NAN));
+		$this->assertFalse($api->$method(NAN, NAN));
+	}
+
+	public function testLteFloatFloat() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('lte', 'float');
+
+		$val = $api->$method(1.1, 2.2);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(2.2, 1.1));
+		$this->assertTrue($api->$method(2.2, 2.2));
+		$this->assertFalse($api->$method(NAN, 1.1));
+		$this->assertFalse($api->$method(2.2, NAN));
+		$this->assertFalse($api->$method(NAN, NAN));
+	}
+
+	public function testGttFloatFloat() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('gtt', 'float');
+
+		$val = $api->$method(2.2, 1.1);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(1.1, 2.2));
+		$this->assertFalse($api->$method(2.2, 2.2));
+		$this->assertFalse($api->$method(NAN, 2.2));
+		$this->assertFalse($api->$method(1.1, NAN));
+		$this->assertFalse($api->$method(NAN, NAN));
+	}
+
+	public function testGteFloatFloat() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('gte', 'float');
+
+		$val = $api->$method(2.2, 1.1);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(1.1, 2.2));
+		$this->assertTrue($api->$method(2.2, 2.2));
+		$this->assertFalse($api->$method(NAN, 2.2));
+		$this->assertFalse($api->$method(1.1, NAN));
+		$this->assertFalse($api->$method(NAN, NAN));
+	}
+
+	public function testTeqFloatFloat() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('teq', 'float');
+
+		$val = $api->$method(2.2, 2.2);
+		$this->assertTrue($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertFalse($api->$method(1.1, 2.2));
+		$this->assertFalse($api->$method(2.2, 1.1));
+		$this->assertFalse($api->$method(NAN, 2.2));
+		$this->assertFalse($api->$method(2.2, NAN));
+		$this->assertFalse($api->$method(NAN, NAN));
+	}
+
+	public function testTneFloatFloat() {
+		$api = $this->_produceApi();
+		$method = $api->getMethodName('tne', 'float');
+
+		$val = $api->$method(2.2, 2.2);
+		$this->assertFalse($val);
+		$this->assertInternalType('boolean', $val);
+
+		$this->assertTrue($api->$method(1.1, 2.2));
+		$this->assertTrue($api->$method(2.2, 1.1));
+		$this->assertTrue($api->$method(NAN, 2.2));
+		$this->assertTrue($api->$method(2.2, NAN));
+		$this->assertTrue($api->$method(NAN, NAN));
+	}
 }

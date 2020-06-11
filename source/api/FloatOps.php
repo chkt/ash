@@ -54,4 +54,28 @@ extends AOps
 	public function modInt(float $a, int $b) : float {
 		return $this->modFloat($a, (float) $b);
 	}
+
+	public function lttFloat(float $a , float $b) : bool {
+		return !is_nan($a) && !is_nan($b) && $a < $b;
+	}
+
+	public function lteFloat(float $a, float $b) : bool {
+		return !is_nan($a) && !is_nan($b) && $a <= $b;
+	}
+
+	public function gttFloat(float $a, float $b) : bool {
+		return !is_nan($a) && !is_nan($b) && $a > $b;
+	}
+
+	public function gteFloat(float $a, float $b) : bool {
+		return !is_nan($a) && !is_nan($b) && $a >= $b;
+	}
+
+	public function teqFloat(float $a, float $b) : bool {
+		return !is_nan($a) && !is_nan($b) && $a === $b;
+	}
+
+	public function tneFloat(float $a, float $b) : bool {
+		return is_nan($a) || is_nan($b) || $a !== $b;
+	}
 }

@@ -20,4 +20,12 @@ extends AOps
 	public function boolString(string $a) : bool {
 		return $a !== '';
 	}
+
+	public function teqBool(bool $a, bool $b) : bool {
+		return $a === $b;
+	}
+
+	public function tneBool(bool $a, bool $b) : bool {
+		return $a !== $b;
+	}
 }

@@ -31,21 +31,35 @@ implements INormalizer
 			'-' => 'sub',
 			'/' => 'div',
 			'%' => 'mod',
-			'.' => 'acc'
+			'.' => 'acc',
+			'<' => 'ltt',
+			'<=' => 'lte',
+			'>' => 'gtt',
+			'>=' => 'gte',
+			'in' => 'pin',
+			'==' => 'teq',
+			'!=' => 'tne'
 		][$symbol];
 	}
 
 	private function _getOperatorPrecedence(string $op) : int {
 		return [
-			'grp' => 4,
-			'acc' => 3,
-			'ace' => 3,
-			'run' => 3,
-			'mul' => 2,
-			'div' => 2,
-			'mod' => 2,
-			'add' => 1,
-			'sub' => 1
+			'grp' => 6,
+			'acc' => 5,
+			'ace' => 5,
+			'run' => 5,
+			'mul' => 4,
+			'div' => 4,
+			'mod' => 4,
+			'add' => 3,
+			'sub' => 3,
+			'ltt' => 2,
+			'lte' => 2,
+			'gtt' => 2,
+			'gte' => 2,
+			'pin' => 2,
+			'teq' => 1,
+			'tne' => 1
 		][$op];
 	}
 
@@ -59,7 +73,14 @@ implements INormalizer
 			'div' => 1,
 			'mod' => 1,
 			'add' => 1,
-			'sub' => 1
+			'sub' => 1,
+			'ltt' => 1,
+			'lte' => 1,
+			'gtt' => 1,
+			'gte' => 1,
+			'pin' => 1,
+			'teq' => 1,
+			'tne' => 1
 		][$op];
 	}
 

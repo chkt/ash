@@ -61,4 +61,28 @@ extends AOps
 		if ($b !== 0.0) return fmod($a, $b);
 		else return NAN;
 	}
+
+	public function lttInt(int $a, int $b) : bool {
+		return $a < $b;
+	}
+
+	public function lteInt(int $a, int $b) : bool {
+		return $a <= $b;
+	}
+
+	public function gttInt(int $a, int $b) : bool {
+		return $a > $b;
+	}
+
+	public function gteInt(int $a, int $b) : bool {
+		return $a >= $b;
+	}
+
+	public function teqInt(int $a, int $b) : bool {
+		return $a === $b;
+	}
+
+	public function tneInt(int $a, int $b) : bool {
+		return $a !== $b;
+	}
 }
