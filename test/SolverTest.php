@@ -2,6 +2,7 @@
 
 namespace test;
 
+use \ErrorException;
 use PHPUnit\Framework\TestCase;
 use eve\common\IHost;
 use ash\api;
@@ -63,6 +64,7 @@ extends TestCase
 			if ($itemType === IToken::TOKEN_NAME_LITERAL) $operands[] = $this->_mockToken($itemType, $item['data']);
 			else if ($itemType === IToken::TOKEN_VALUE) $operands[] = $this->_mockValueToken($itemType, $item['data']);
 			else if ($itemType === IToken::TOKEN_BINARY_OPERATION) $operands[] = $this->_mockOperation($itemType, $item['data']);
+			else if ($itemType === IToken::TOKEN_BRANCH) $operands[] = $this->_mockBranch($itemType, $item['data'], $data[0]['data']);
  			else if ($itemType === IToken::TOKEN_EXPRESSION_LIST) $operands[] = $this->_mockList($itemType, $item['data']);
  			else $this->fail($itemType);
 		}
@@ -95,7 +97,7 @@ extends TestCase
 		return $token;
 	}
 
-	private function _mockBranch(int $type, array $data) {
+	private function _mockBranch(int $type, array $data, string $op) {
 		$children = [];
 
 		foreach ($data as $item) {
@@ -103,7 +105,7 @@ extends TestCase
 
 			if ($childType === IToken::TOKEN_NAME_LITERAL) $children[] = $this->_mockToken($childType, $item['data']);
 			else if ($childType === IToken::TOKEN_BINARY_OPERATION) $children[] = $this->_mockOperation($childType, $item['data']);
-			else $this->_fail($childType);
+			else $this->fail($childType);
 		}
 
 		$branch = $this
@@ -115,13 +117,18 @@ extends TestCase
 			->willReturn($type);
 
 		$branch
-			->method('getTest')
-			->willReturn($children[0]);
+			->method('getBranchIndex')
+			->willReturnCallback(function ($value) use ($op) {
+				if ($op === 'abc') return (int)!(bool)$value;
+				else if ($op === 'anb') return (int)(bool)$value - 1;
+				else if ($op === 'aab') return (int)!(bool)$value - 1;
+				else throw new ErrorException();
+			});
 
 		$branch
-			->method('getBranchAt')
-			->willReturnCallback(function(int $index) use ($children) {
-				return $children[$index + 1];
+			->method('getChildAt')
+			->willReturnCallback(function ($index) use ($children) {
+				return $children[$index];
 			});
 
 		return $branch;
@@ -306,9 +313,6 @@ extends TestCase
 			case IToken::TOKEN_BINARY_OPERATION :
 				return $this->_mockOperation($type, $ast['data']);
 
-			case IToken::TOKEN_TERNARY_OPERATION :
-				return $this->_mockBranch($type, $ast['data']);
-
 			case IToken::TOKEN_EXPRESSION_LIST :
 				return $this->_mockList($type, $ast['data']);
 
@@ -470,7 +474,7 @@ extends TestCase
 		]);
 		$solver = $this->_produceSolver($expr);
 
-		$this->expectException(\ErrorException::class);
+		$this->expectException(ErrorException::class);
 		$this->expectExceptionMessage('EXPR no ops "float"');
 
 		$solver->resolve([]);
@@ -492,7 +496,7 @@ extends TestCase
 		]);
 		$solver = $this->_produceSolver($expr);
 
-		$this->expectException(\ErrorException::class);
+		$this->expectException(ErrorException::class);
 		$this->expectExceptionMessage('EXPR no op "add int string"');
 
 		$solver->resolve([]);
@@ -530,17 +534,37 @@ extends TestCase
 
 	public function testSolveTernaryOperation() {
 		$expr = $this->_produceExpression([
-			'type' => IToken::TOKEN_TERNARY_OPERATION,
+			'type' => IToken::TOKEN_BINARY_OPERATION,
 			'data' => [
+				['type' => IToken::TOKEN_BINARY_OPERATOR, 'data' => 'abc'],
 				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'foo'],
-				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'bar'],
-				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'baz']
+				['type' => IToken::TOKEN_BRANCH, 'data' => [
+					['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'bar'],
+					['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'baz']
+				]]
 			]
 		]);
 		$context = [ 'foo' => 1, 'bar' => 2, 'baz' => 3];
 
 		$solver = $this->_produceSolver($expr);
 		$this->assertEquals(2, $solver->resolve($context));
+	}
+
+	public function testSolveLogicalOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [
+				['type' => IToken::TOKEN_BINARY_OPERATOR, 'data' => 'anb'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'foo'],
+				['type' => IToken::TOKEN_BRANCH, 'data' => [
+					['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'bar']
+				]]
+			]
+		]);
+
+		$solver = $this->_produceSolver($expr);
+		$this->assertEquals(2, $solver->resolve([ 'foo' => 1, 'bar' => 2 ]));
+		$this->assertEquals(0, $solver->resolve([ 'foo' => 0, 'bar' => 2 ]));
 	}
 
 

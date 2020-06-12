@@ -121,4 +121,16 @@ extends TestCase
 		$this->assertEquals(true, $solver->resolve([ 'a' => 2.2, 'b' => 1.1]));
 		$this->assertEquals(false, $solver->resolve([ 'a' => 2.2, 'b' => 2.2]));
 	}
+
+	public function testPrecedence() {
+		$parser = $this->_produceParser();
+		$solver = $parser->parse('a + 3 * b && c * 2 + d ? e && f : g || h');
+
+		$this->assertEquals('foo', $solver->resolve([ 'a' => -2, 'b' => 1, 'c' => 2, 'd' => -3, 'e' => 'bar', 'f' => 'foo', 'g' => 'baz', 'h' => 'qux']));
+		$this->assertEquals(''   , $solver->resolve([ 'a' => -2, 'b' => 1, 'c' => 2, 'd' => -3, 'e' => ''   , 'f' => 'foo', 'g' => 'baz', 'h' => 'qux']));
+		$this->assertEquals('baz', $solver->resolve([ 'a' => -3, 'b' => 1, 'c' => 2, 'd' => -3, 'e' => 'bar', 'f' => 'foo', 'g' => 'baz', 'h' => 'qux']));
+		$this->assertEquals('qux', $solver->resolve([ 'a' => -3, 'b' => 1, 'c' => 2, 'd' => -3, 'e' => 'bar', 'f' => 'foo', 'g' => ''   , 'h' => 'qux']));
+		$this->assertEquals('baz', $solver->resolve([ 'a' => -2, 'b' => 1, 'c' => 2, 'd' => -4, 'e' => 'bar', 'f' => 'foo', 'g' => 'baz', 'h' => 'qux']));
+		$this->assertEquals('qux', $solver->resolve([ 'a' => -2, 'b' => 1, 'c' => 2, 'd' => -4, 'e' => 'bar', 'f' => 'foo', 'g' => ''   , 'h' => 'qux']));
+	}
 }

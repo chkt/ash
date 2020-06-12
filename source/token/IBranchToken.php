@@ -5,12 +5,11 @@ namespace ash\token;
 
 
 interface IBranchToken
-extends IToken
+extends IListToken
 {
 
-	public function getTest() : IToken;
+	const BRANCH_INDEX_SELF = -1;
 
-	public function getNumBranches() : int;
 
-	public function getBranchAt(int $index) : IToken;
+	public function getBranchIndex($value) : int;
 }

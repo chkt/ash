@@ -2,6 +2,7 @@
 
 namespace test;
 
+use \ErrorException;
 use PHPUnit\Framework\TestCase;
 use ash\token;
 use ash\token\IToken;
@@ -135,7 +136,7 @@ extends TestCase
 					case 'binaryOperatorLiteral' : return new token\BinaryOperatorLiteral();
 					case 'operator' : return new token\Operator($factory, $args);
 					case 'binaryOperation' : return new token\BinaryOperation($factory, $args);
-					case 'ternaryOperation' : return new token\TernaryOperation($factory, $args);
+					case 'branch' : return new token\Branch($factory, $args);
 					case 'integerValue' : return new token\IntegerValue($factory, $args);
 					case 'floatValue' : return new token\FloatValue($factory, $args);
 					case 'stringValue' : return new token\StringValue($factory, $args);
@@ -412,7 +413,7 @@ extends TestCase
 			'data' => 'foo'
 		]);
 
-		$this->expectException(\ErrorException::class);
+		$this->expectException(ErrorException::class);
 		$this->expectExceptionMessage('EXPR invalid target "foo"');
 
 		$this->_produceNormalizer()->transform($expr);
@@ -479,12 +480,39 @@ extends TestCase
 				]
 			]
 		]);
-		$ast = [
-			'type' => IToken::TOKEN_TERNARY_OPERATION,
+		$ast =[
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [
+				['type' => IToken::TOKEN_BINARY_OPERATOR, 'data' => 'abc'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
+				['type' => IToken::TOKEN_BRANCH, 'data' => [
+					['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b'],
+					['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'c']
+				]]
+			]
+		];
+
+		$fast = $this->_produceNormalizer()->transform($expr);
+		$this->assertEquals($ast, $fast->getProjection());
+	}
+
+	public function testNormalizeLogicalOperation() {
+		$expr = $this->_produceExpression([
+			'type' => IToken::TOKEN_EXPRESSION,
 			'data' => [
 				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
-				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b'],
-				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'c']
+				['type' => IToken::TOKEN_BINARY_OPERATOR, 'data' => '&&'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b']
+			]
+		]);
+		$ast = [
+			'type' => IToken::TOKEN_BINARY_OPERATION,
+			'data' => [
+				['type' => IToken::TOKEN_BINARY_OPERATOR, 'data' => 'anb'],
+				['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'a'],
+				['type' => IToken::TOKEN_BRANCH, 'data' => [
+					['type' => IToken::TOKEN_NAME_LITERAL, 'data' => 'b']
+				]]
 			]
 		];
 

@@ -2,6 +2,7 @@
 
 namespace ash;
 
+use \ErrorException;
 use ash\token\IBranchToken;
 use eve\common\IHost;
 use ash\api\IOps;
@@ -47,7 +48,7 @@ implements ISolver
 		$id = 'op-' . $ltype;
 
 		if ($api->hasKey($id)) return $api->getItem($id);
-		else throw new \ErrorException(sprintf(
+		else throw new ErrorException(sprintf(
 			'EXPR no ops "%s"',
 			$ltype
 		));
@@ -60,7 +61,7 @@ implements ISolver
 		switch ($type) {
 			case IToken::TOKEN_NAME_LITERAL : return $token->getChars();
 
-			default : throw new \ErrorException(sprintf(
+			default : throw new ErrorException(sprintf(
 				'EXPR malformed accessor "%s"',
 				$token->getChars()
 			));
@@ -76,6 +77,13 @@ implements ISolver
 		}
 	}
 
+	private function _resolveBranch(IBranchToken $token, $value) {
+		$index = $token->getBranchIndex($value);
+
+		if ($index === IBranchToken::BRANCH_INDEX_SELF) return $value;
+		else return $this->_resolveExpression($token->getChildAt($index));
+	}
+
 	private function _resolveBinaryOperation(IOperationToken $token) {
 		$left = $token->getOperandAt(IOperationToken::OPERAND_BINARY_BEFORE);
 		$lval = $this->_resolveExpression($left);
@@ -84,30 +92,21 @@ implements ISolver
 		$op = $token->getOperator()->getChars();
 
 		$right = $token->getOperandAt(IOperationToken::OPERAND_BINARY_AFTER);
-		$rval = $this->_resolveRightOperand($op, $right);
 
-		$methodName = $ops->getMethodName($op, $this->_getType($rval));
+		if ($right instanceof IBranchToken) return $this->_resolveBranch($right, $lval);
+		else {
+			$rval = $this->_resolveRightOperand($op, $right);
 
-		if (method_exists($ops, $methodName)) return $ops->$methodName($lval, $rval);
-		else throw new\ErrorException(sprintf(
-			'EXPR no op "%s %s %s"',
-			$op,
-			$this->_getType($lval),
-			$this->_getType($rval)
-		));
-	}
+			$methodName = $ops->getMethodName($op, $this->_getType($rval));
 
-	private function _resolveTernaryOperation(IBranchToken $token) {
-		$test = $this->_resolveExpression($token->getTest());
-
-		$ops = $this->_getOps('bool');
-		$name = $ops->getMethodName('bool', $this->_getType($test));
-
-		if (method_exists($ops, $name)) return $this->_resolveExpression($token->getBranchAt($ops->$name($test) ? 0 : 1));
-		else throw new \ErrorException(sprintf(
-			'EXPR no op "from %s"',
-			$this->_getType($test)
-		));
+			if (method_exists($ops, $methodName)) return $ops->$methodName($lval, $rval);
+			else throw new ErrorException(sprintf(
+				'EXPR no op "%s %s %s"',
+				$op,
+				$this->_getType($lval),
+				$this->_getType($rval)
+			));
+		}
 	}
 
 	private function _resolveExpressionList(IListToken $token) : array {
@@ -127,8 +126,7 @@ implements ISolver
 				->accString($this->_context, $token->getChars());
 			case IToken::TOKEN_VALUE : return $token->getValue();
 			case IToken::TOKEN_BINARY_OPERATION : return $this->_resolveBinaryOperation($token);
-			case IToken::TOKEN_TERNARY_OPERATION : return $this->_resolveTernaryOperation($token);
-			default : throw new \ErrorException($type);
+			default : throw new ErrorException($type);
 		}
 	}
 

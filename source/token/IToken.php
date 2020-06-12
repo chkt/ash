@@ -28,7 +28,7 @@ extends IProjectable
 
 	const TOKEN_BINARY_OPERATOR = 9;
 	const TOKEN_BINARY_OPERATION = 10;
-	const TOKEN_TERNARY_OPERATION = 14;
+	const TOKEN_BRANCH = 14;
 
 
 

@@ -14,12 +14,14 @@ extends AToken
 
 	protected function _isValid(string $chars, string $char) : bool {
 		$map = [
-			'' => '.+-*/%=!<>i',
+			'' => '.+-*/%=!<>i&|',
 			'!' => '=',
 			'=' => '=',
 			'<' => '=',
 			'>' => '=',
-			'i' => 'n'
+			'i' => 'n',
+			'&' => '&',
+			'|' => '|'
 		];
 
 		return
