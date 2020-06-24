@@ -21,7 +21,7 @@ implements IBranchToken
 	}
 
 	public function getChars() : string {
-		$res = [ ':' . count($this->_tokens) ];
+		$res = [ 'brn:' . count($this->_tokens) ];
 
 		foreach ($this->_tokens as $token) $res[] = $token->getChars();
 
