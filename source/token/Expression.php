@@ -2,6 +2,8 @@
 
 namespace ash\token;
 
+use \ErrorException;
+
 
 
 final class Expression
@@ -58,6 +60,7 @@ extends AListToken
 		switch ($type) {
 			case IToken::TOKEN_NAME_LITERAL :
 			case IToken::TOKEN_NUMBER_LITERAL :
+			case IToken::TOKEN_STRING_LITERAL :
 			case IToken::TOKEN_ACCESS_GROUP :
 			case IToken::TOKEN_EXPRESSION_GROUP :
 			case IToken::TOKEN_CALL_GROUP :
@@ -66,7 +69,10 @@ extends AListToken
 			case IToken::TOKEN_BINARY_OPERATOR :
 				return $this->_getOperatorSuccessor($char);
 
-			default : throw new \ErrorException($type);
+			default : throw new ErrorException(sprintf(
+				'EXPR no successor for type %s',
+				$type
+			));
 		}
 	}
 }
