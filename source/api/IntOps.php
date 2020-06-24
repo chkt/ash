@@ -36,6 +36,30 @@ extends AOps
 		));
 	}
 
+	public function lttInt(int $a, int $b) : bool {
+		return $a < $b;
+	}
+
+	public function lteInt(int $a, int $b) : bool {
+		return $a <= $b;
+	}
+
+	public function gttInt(int $a, int $b) : bool {
+		return $a > $b;
+	}
+
+	public function gteInt(int $a, int $b) : bool {
+		return $a >= $b;
+	}
+
+	public function teqInt(int $a, int $b) : bool {
+		return $a === $b;
+	}
+
+	public function tneInt(int $a, int $b) : bool {
+		return $a !== $b;
+	}
+
 	public function addFloat(int $a, float $b) : float {
 		return (float) $a + $b;
 	}
@@ -62,27 +86,27 @@ extends AOps
 		else return NAN;
 	}
 
-	public function lttInt(int $a, int $b) : bool {
-		return $a < $b;
+	public function lttFloat(int $a, float $b) : bool {
+		return !is_nan($b) && $a < (int) $b;
 	}
 
-	public function lteInt(int $a, int $b) : bool {
-		return $a <= $b;
+	public function lteFloat(int $a, float $b) : bool {
+		return !is_nan($b) && $a <= (int) $b;
 	}
 
-	public function gttInt(int $a, int $b) : bool {
-		return $a > $b;
+	public function gttFloat(int $a, float $b) : bool {
+		return !is_nan($b) && $a > (int) $b;
 	}
 
-	public function gteInt(int $a, int $b) : bool {
-		return $a >= $b;
+	public function gteFloat(int $a, float $b) : bool {
+		return !is_nan($b) && $a >= (int) $b;
 	}
 
-	public function teqInt(int $a, int $b) : bool {
-		return $a === $b;
+	public function teqFloat(int $a, float $b) : bool {
+		return false;
 	}
 
-	public function tneInt(int $a, int $b) : bool {
-		return $a !== $b;
+	public function tneFloat(int $a, float $b) : bool {
+		return false;
 	}
 }

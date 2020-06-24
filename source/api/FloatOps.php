@@ -35,26 +35,6 @@ extends AOps
 		else return NAN;
 	}
 
-	public function addInt(float $a, int $b) : float {
-		return $a + (float) $b;
-	}
-
-	public function mulInt(float $a, int $b) : float {
-		return $a * (float) $b;
-	}
-
-	public function subInt(float $a, int $b) : float {
-		return $a - (float) $b;
-	}
-
-	public function divInt(float $a, int $b) : float {
-		return $this->divFloat($a, (float) $b);
-	}
-
-	public function modInt(float $a, int $b) : float {
-		return $this->modFloat($a, (float) $b);
-	}
-
 	public function lttFloat(float $a , float $b) : bool {
 		return !is_nan($a) && !is_nan($b) && $a < $b;
 	}
@@ -77,5 +57,49 @@ extends AOps
 
 	public function tneFloat(float $a, float $b) : bool {
 		return is_nan($a) || is_nan($b) || $a !== $b;
+	}
+
+	public function addInt(float $a, int $b) : float {
+		return $a + (float) $b;
+	}
+
+	public function mulInt(float $a, int $b) : float {
+		return $a * (float) $b;
+	}
+
+	public function subInt(float $a, int $b) : float {
+		return $a - (float) $b;
+	}
+
+	public function divInt(float $a, int $b) : float {
+		return $this->divFloat($a, (float) $b);
+	}
+
+	public function modInt(float $a, int $b) : float {
+		return $this->modFloat($a, (float) $b);
+	}
+
+	public function lttInt(float $a, int $b) : bool {
+		return !is_nan($a) && $a < (float) $b;
+	}
+
+	public function lteInt(float $a, int $b) : bool {
+		return !is_nan($a) && $a <= (float) $b;
+	}
+
+	public function gttInt(float $a, int $b) : bool {
+		return !is_nan($a) && $a > (float) $b;
+	}
+
+	public function gteInt(float $a, int $b) : bool {
+		return !is_nan($a) && $a >= (float) $b;
+	}
+
+	public function teqInt(float $a, int $b) : bool {
+		return false;
+	}
+
+	public function tneInt(float $a, int $b) : bool {
+		return true;
 	}
 }
