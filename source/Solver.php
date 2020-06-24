@@ -134,7 +134,12 @@ implements ISolver
 	public function resolve(array $context) {
 		$this->_context = $context;
 
-		return $this->_resolveExpression($this->_root);
+		try {
+			return $this->_resolveExpression($this->_root);
+		}
+		catch (ErrorException $ex) {
+			throw new ErrorException($this->_root->getChars(), 0, 1, __FILE__, __LINE__, $ex);
+		}
 	}
 
 
